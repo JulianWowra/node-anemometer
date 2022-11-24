@@ -106,7 +106,7 @@ The wind speed is always calculated with the signals and the time. Often you can
 
 The following basic equation applies:
 
-$$windSpeed = \frac{\left ( \frac{pulses}{pulses~per~rotation} \right )}{time}\ast anemometerFactor$$
+![calculation](./images/calculation.svg)
 
 **`pulses`**: Signals emitted by the anemometer. The are similar when you press a button
 
@@ -114,7 +114,7 @@ $$windSpeed = \frac{\left ( \frac{pulses}{pulses~per~rotation} \right )}{time}\a
 
 **`time`**: Is the duration (in seconds) in which the measurement was performed
 
-**`anemometerFactor`**: Mostly to find in the datasheet, but can also be calculated by yourself. More information below
+**`anemometer factor`**: Mostly to find in the datasheet, but can also be calculated by yourself. More information below
 
 ![](./images/pulses.svg)
 
