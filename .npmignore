@@ -10,4 +10,5 @@ src
 .prettierrc.js
 CONTRIBUTING.md
 tsconfig.json
+typedoc.css
 yarn.lock
