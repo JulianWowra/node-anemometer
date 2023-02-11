@@ -1,5 +1,7 @@
 .git
 .github
+docs
+examples
 images
 node_modules
 src
