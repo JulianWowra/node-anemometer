@@ -7,13 +7,12 @@ export class PCF8583 {
 	private readonly wire: I2CBus;
 	private readonly i2cScan: () => Promise<number[]>;
 
-	constructor(private readonly address: number, private readonly bus: number) {
+	constructor(readonly address: number, readonly bus: number) {
 		this.wire = openSync(this.bus);
-
 		this.i2cScan = promisify(this.wire.scan);
 	}
 
-	async scan(): Promise<unknown[]> {
+	async scan() {
 		return this.i2cScan();
 	}
 
@@ -69,7 +68,6 @@ export class PCF8583 {
 
 	private async getRegister(offset: number) {
 		await this.i2cSendByte(offset);
-
 		return (await this.i2cRead(1))[0];
 	}
 
@@ -87,6 +85,7 @@ export class PCF8583 {
 	private async stop() {
 		let control = await this.getRegister(LOCATION_CONTROL);
 		control |= 0x80;
+
 		await this.setRegister(LOCATION_CONTROL, control);
 	}
 
@@ -122,9 +121,7 @@ export class PCF8583 {
 
 	async setCount(value: number) {
 		await this.stop();
-
 		await this.i2cWriteBytes(LOCATION_COUNTER, [byteToBCD(value % 100), byteToBCD((value / 100) % 100), byteToBCD((value / 10000) % 100)]);
-
 		await this.start();
 	}
 
@@ -141,7 +138,6 @@ export class PCF8583 {
 
 	async cleanUp() {
 		await this.stop();
-
 		this.wire.closeSync();
 	}
 }

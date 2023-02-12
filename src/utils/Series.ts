@@ -1,57 +1,53 @@
-import moment from 'moment';
+export class Series<T> {
+	/**
+	 * **Flow direction:**
+	 * old data  <--  new data
+	 */
+	private data: DataRecord<T>[] = [];
 
-interface DataSet {
-	value: number;
-	unixTS: number;
-}
+	/**
+	 * @param expirationTime Indication after how many seconds a data record loses validity
+	 * @param maxElements Specifies the maximum number of data records to be stored temporarily. 0 is no limit.
+	 */
+	constructor(readonly expirationTime = 600, readonly maxElements = 700) {}
 
-export class Series {
-	// Flow direction
-	// old data    <----    new data
-	private data: DataSet[] = [];
+	private getUnixTS() {
+		return Math.floor(new Date().getTime() / 1000);
+	}
 
-	constructor(
-		readonly maxTime = 600, // Seconds
-		readonly maxEntries = 700 // Set the value to 0 if there should be no limit
-	) {}
-
-	addData(value: number) {
-		if (this.maxEntries !== 0 && this.data.length >= this.maxEntries) {
+	addData(value: T) {
+		if (this.maxElements !== 0 && this.data.length >= this.maxElements) {
 			this.data.shift();
 		}
 
-		this.data.push({ value, unixTS: moment().valueOf() });
+		this.data.push({ value, timestamp: this.getUnixTS() });
 	}
 
-	getData(time: number) {
-		const ts = moment()
-			.utc()
-			.subtract(time + 1, 'seconds');
-
-		const s = (a: DataSet, b: DataSet) => {
-			if (moment(a.unixTS).utc().isSameOrAfter(b.unixTS)) {
-				return 1;
-			}
-
-			return -1;
-		};
-
-		return this.data.filter((data) => ts.isSameOrBefore(data.unixTS, 'seconds')).sort(s);
+	getData(offset: number) {
+		const ts = this.getUnixTS() - offset;
+		return this.data.filter((data) => data.timestamp >= ts).sort((a, b) => (a.timestamp >= b.timestamp ? 1 : -1));
 	}
 
 	async cleanUp() {
-		if (this.maxEntries !== 0) {
-			while (this.data.length > this.maxEntries) {
+		if (this.maxElements !== 0) {
+			while (this.data.length > this.maxElements) {
 				this.data.shift();
 			}
 		}
 
+		const beginOfValidData = this.getUnixTS() - this.expirationTime + 1;
+
 		for (const x of this.data) {
-			if (moment().valueOf() <= moment(x.unixTS).add(this.maxTime, 'seconds').valueOf()) {
+			if (x.timestamp >= beginOfValidData) {
 				break;
 			}
 
 			this.data.shift();
 		}
 	}
+}
+
+export interface DataRecord<T> {
+	value: T;
+	timestamp: number;
 }

@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
 import { PCF8583 } from './utils/PCF8583';
 import { Series } from './utils/Series';
@@ -7,14 +6,11 @@ import { WindSpeed } from './utils/utilities';
 export class Anemometer {
 	private readonly chip: PCF8583;
 	private readInterval: NodeJS.Timer | null = null;
-	private dataSeries = new Series();
+	private dataSeries: Series<number>;
 
-	constructor(
-		private readonly calc: (pulses: number, time: number) => WindSpeed,
-		private readonly address = I2CADDR,
-		private readonly bus = 1
-	) {
-		this.chip = new PCF8583(this.address, this.bus);
+	constructor(private readonly calc: (pulses: number, time: number) => WindSpeed, private readonly opts: AnemometerOptions = {}) {
+		this.chip = new PCF8583(this.opts.address || I2CADDR, this.opts.bus || 1);
+		this.dataSeries = new Series(this.opts.dataSeries?.expirationTime, this.opts.dataSeries?.maxElements);
 		this.init();
 	}
 
@@ -32,7 +28,9 @@ export class Anemometer {
 			try {
 				const count = await this.chip.getCount();
 
-				this.dataSeries.addData(count);
+				if(!isNaN(count)) {
+					this.dataSeries.addData(count);
+				}
 
 				if (count > 900000) {
 					await this.chip.setCount(0);
@@ -41,18 +39,24 @@ export class Anemometer {
 
 				this.dataSeries.cleanUp();
 			} catch (e) {
-				console.error(e);
+				if (this.opts.readFailed !== undefined) {
+					this.opts.readFailed(e);
+				}
 			}
-		}, 1000);
+		}, this.opts.readInterval || 1000);
 	}
 
+	/**
+	 * Returns an array of numbers, where each number represents the I2C address of a detected device.
+	 * @see https://github.com/fivdi/i2c-bus#busscanstartaddr-endaddr-cb
+	 */
 	async scan() {
 		return this.chip.scan();
 	}
 
 	getData(time: number) {
-		if (time <= 0 || time > this.dataSeries.maxTime) {
-			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.dataSeries.maxTime}!`);
+		if (time <= 0 || time > this.dataSeries.expirationTime) {
+			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.dataSeries.expirationTime}!`);
 		}
 
 		const { pulses, duration } = this.calculatePulsesFromSeries(time);
@@ -67,19 +71,17 @@ export class Anemometer {
 			return { pulses: 0, duration: 0 };
 		}
 
-		const valueArray = data.map((data) => data.value);
-		const nullPoint = valueArray[0] || 0;
+		const duration = data[data.length - 1].timestamp - data[0].timestamp;
+		const startValue = data[0].value;
 		let count = 0;
 
-		for (let i = 0; i < valueArray.length; i++) {
-			if ((valueArray[i + 1] || 0) < valueArray[i]) {
-				count += valueArray[i];
+		for (let i = 0; i < data.length; i++) {
+			if ((data[i + 1]?.value || 0) < data[i].value) {
+				count += data[i].value;
 			}
 		}
 
-		const duration = moment.duration(moment(data[data.length - 1].unixTS).diff(moment(data[0].unixTS)));
-
-		return { pulses: count - nullPoint, duration: duration.asSeconds() };
+		return { pulses: count - startValue, duration };
 	}
 
 	isReady() {
@@ -98,6 +100,17 @@ export class Anemometer {
 
 		await this.chip.cleanUp();
 	}
+}
+
+export interface AnemometerOptions {
+	bus?: number;
+	address?: number;
+	readInterval?: number;
+	readFailed?: (error: unknown) => void;
+	dataSeries?: {
+		expirationTime?: number;
+		maxElements?: number;
+	};
 }
 
 // Provide legacy support

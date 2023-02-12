@@ -9,13 +9,12 @@
 	"author": "KillerJulian <info@killerjulian.de>",
 	"license": "MIT",
 	"dependencies": {
-		"i2c-bus": "5.2.2",
-		"moment": "2.29.4"
+		"i2c-bus": "5.2.2"
 	},
 	"devDependencies": {
-		"@types/node": "16.11.7",
 		"@droppedcode/typedoc-plugin-copy-assets": "1.0.6",
 		"@types/i2c-bus": "5.1.0",
+		"@types/node": "16.11.7",
 		"@typescript-eslint/eslint-plugin": "5.51.0",
 		"@typescript-eslint/parser": "5.51.0",
 		"eslint": "8.34.0",
