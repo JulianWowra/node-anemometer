@@ -1,5 +1,7 @@
 .git
 .github
+docs
+examples
 images
 node_modules
 src
@@ -10,4 +12,5 @@ src
 .prettierrc.js
 CONTRIBUTING.md
 tsconfig.json
+typedoc.css
 yarn.lock

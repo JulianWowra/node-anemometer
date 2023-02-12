@@ -14,11 +14,11 @@ yarn add node-anemometer
 
 ## Required hardware
 
-**At the moment this library can only be used with an extra counter module [PCF8583](https://www.nxp.com/docs/en/data-sheet/PCF8583.pdf).** It is not quite easy to use it.
+**At the moment this library can only be used with an extra counter module [PCF8583](https://www.nxp.com/docs/en/data-sheet/PCF8583.pdf)**
 
 ### The circuit board
 
-**You need an debounce filter!** Otherwise, the chip will count many noise values. _For more information click [here](https://ptvo.info/zigbee-configurable-firmware-features/external-sensors/pcf8583-zigbee-counter/)._ There are many designs of such PCBs. Here is one example: [circuit board from Horter](https://www.horter.de/doku/i2c-counter-PCF8583_db.pdf)
+There are several ways to count the revolutions of the anemometer. The best result I got with the KY-003 board (a magnetic field sensor) and a magnet. The magnet is placed so that it triggers the sensor with each complete rotation. If you use mechanical components like reed switches, you need a debounce filter and additional hardware to avoid count many [noise values](https://ptvo.info/zigbee-configurable-firmware-features/external-sensors/pcf8583-zigbee-counter/). There are many designs of such PCBs. Here is one example: [circuit board from Horter](https://www.horter.de/doku/i2c-counter-PCF8583_db.pdf)
 
 ## System settings
 
