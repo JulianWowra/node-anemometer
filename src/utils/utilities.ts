@@ -56,7 +56,7 @@ export class WindSpeed {
 }
 
 export function round(value: number, decimalPlaces: number) {
-	if (value % 1 != 0) {
+	if (value % 1 !== 0) {
 		const i = Math.pow(10, decimalPlaces);
 		return Math.round((value + Number.EPSILON) * i) / i;
 	}
@@ -69,9 +69,17 @@ export function calcFactor(radius: number, adjustment: number) {
 }
 
 export function bcdToByte(value: number) {
+	if (value >> 4 > 9 || (value & 0x0F) > 9) {
+		throw new Error(`Invalid value for byte convertion: ${value.toString(16)}`);
+	}
+
 	return (value >> 4) * 10 + (value & 0x0f);
 }
 
 export function byteToBCD(value: number) {
+	if(value >= 100) {
+		throw new Error(`Invalid value for bcd convertion:  ${value}`);
+	}
+
 	return ((value / 10) << 4) + (value % 10);
 }

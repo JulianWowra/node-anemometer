@@ -16,45 +16,10 @@ export class PCF8583 {
 		return this.i2cScan();
 	}
 
-	private async i2cRead(length: number): Promise<Buffer> {
-		return new Promise((resolve, reject) => {
-			this.wire.i2cRead(this.address, length, Buffer.alloc(length), (err, bytesRead, buffer) => {
-				if (err) {
-					reject(err);
-					return;
-				}
-
-				if (bytesRead !== length) {
-					reject(new Error(`Expected to read ${length} bytes, but only read ${bytesRead} bytes`));
-					return;
-				}
-
-				resolve(buffer);
-			});
-		});
-	}
-
-	private async i2cSendByte(byte: number): Promise<void> {
-		if (byte < 0 || byte > 255) {
-			throw new Error('Byte out of range!');
-		}
-
-		return new Promise((resolve, reject) => {
-			this.wire.sendByte(this.address, byte, (err) => {
-				if (err) {
-					reject(err);
-					return;
-				}
-
-				resolve();
-			});
-		});
-	}
-
-	private async i2cWriteBytes(cmd: number, bytes: number[]): Promise<void> {
+	private async i2cWriteBytes(cmd: number, bytes: number[]) {
 		const buff = Buffer.from(bytes);
 
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			this.wire.writeI2cBlock(this.address, cmd, buff.length, buff, (err) => {
 				if (err) {
 					reject(err);
@@ -66,9 +31,23 @@ export class PCF8583 {
 		});
 	}
 
+	private async i2cReadBytes(cmd: number, length: number) {
+		const buff = Buffer.alloc(length);
+
+		return await new Promise<Buffer>((resolve, reject) => {
+			this.wire.readI2cBlock(this.address, cmd, buff.length, buff, (err, _bytesRead, buffer) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+
+				resolve(buffer);
+			});
+		});
+	}
+
 	private async getRegister(offset: number) {
-		await this.i2cSendByte(offset);
-		return (await this.i2cRead(1))[0];
+		return (await this.i2cReadBytes(offset, 1))[0];
 	}
 
 	private async setRegister(offset: number, value: number) {
@@ -126,8 +105,7 @@ export class PCF8583 {
 	}
 
 	async getCount() {
-		await this.i2cSendByte(LOCATION_COUNTER);
-		const read = await this.i2cRead(3);
+		const read = await this.i2cReadBytes(LOCATION_COUNTER, 3);
 
 		let count = bcdToByte(read[0]);
 		count += bcdToByte(read[1]) * 100;
