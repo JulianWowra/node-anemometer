@@ -12,14 +12,14 @@
 		"i2c-bus": "5.2.2"
 	},
 	"devDependencies": {
-		"@droppedcode/typedoc-plugin-copy-assets": "1.0.6",
+		"@droppedcode/typedoc-plugin-copy-assets": "1.0.9",
 		"@types/i2c-bus": "5.1.0",
 		"@types/node": "16.11.7",
-		"@typescript-eslint/eslint-plugin": "5.51.0",
-		"@typescript-eslint/parser": "5.51.0",
-		"eslint": "8.34.0",
-		"typedoc": "0.23.24",
-		"typescript": "4.9.5"
+		"@typescript-eslint/eslint-plugin": "5.59.5",
+		"@typescript-eslint/parser": "5.59.5",
+		"eslint": "8.40.0",
+		"typedoc": "0.24.7",
+		"typescript": "5.0.4"
 	},
 	"scripts": {
 		"build": "yarn build:lib && yarn build:docs",

@@ -27,10 +27,7 @@ export class Anemometer {
 		this.readInterval = setInterval(async () => {
 			try {
 				const count = await this.chip.getCount();
-
-				if(!isNaN(count)) {
-					this.dataSeries.addData(count);
-				}
+				this.dataSeries.addData(count);
 
 				if (count > 900000) {
 					await this.chip.setCount(0);
