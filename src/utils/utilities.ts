@@ -1,3 +1,4 @@
+import { Series } from './Series';
 
 export enum WindSpeedUnits {
 	kilometersPerHour = 'km/h',
@@ -79,4 +80,24 @@ export function byteToBCD(value: number) {
 	}
 
 	return ((value / 10) << 4) + (value % 10);
+}
+
+export function getPulsesFromSeries(series: Series<number>, time: number) {
+	const data = series.getData(time);
+
+	if (data.length === 0) {
+		return { pulses: 0, duration: 0 };
+	}
+
+	const duration = data[data.length - 1].timestamp - data[0].timestamp;
+	const startValue = data[0].value;
+	let count = 0;
+
+	for (let i = 0; i < data.length; i++) {
+		if ((data[i + 1]?.value || 0) < data[i].value) {
+			count += data[i].value;
+		}
+	}
+
+	return { pulses: count - startValue, duration };
 }

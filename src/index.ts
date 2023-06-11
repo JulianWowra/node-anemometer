@@ -1,7 +1,7 @@
 import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
 import { PCF8583 } from './utils/PCF8583';
 import { Series } from './utils/Series';
-import { WindSpeed } from './utils/utilities';
+import { getPulsesFromSeries, WindSpeed } from './utils/utilities';
 
 export class Anemometer {
 	private readonly chip: PCF8583;
@@ -56,29 +56,9 @@ export class Anemometer {
 			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.dataSeries.expirationTime}!`);
 		}
 
-		const { pulses, duration } = this.calculatePulsesFromSeries(time);
+		const { pulses, duration } = getPulsesFromSeries(this.dataSeries, time);
 
 		return this.calc(pulses, duration);
-	}
-
-	private calculatePulsesFromSeries(time: number) {
-		const data = this.dataSeries.getData(time);
-
-		if (data.length === 0) {
-			return { pulses: 0, duration: 0 };
-		}
-
-		const duration = data[data.length - 1].timestamp - data[0].timestamp;
-		const startValue = data[0].value;
-		let count = 0;
-
-		for (let i = 0; i < data.length; i++) {
-			if ((data[i + 1]?.value || 0) < data[i].value) {
-				count += data[i].value;
-			}
-		}
-
-		return { pulses: count - startValue, duration };
 	}
 
 	isReady() {
