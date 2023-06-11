@@ -66,7 +66,7 @@ export function calcFactor(radius: number, adjustment: number) {
 }
 
 export function bcdToByte(value: number) {
-	if (value >> 4 > 9 || (value & 0x0F) > 9) {
+	if (value >> 4 > 9 || (value & 0x0f) > 9) {
 		throw new Error(`Invalid value for byte convertion: ${value.toString(16)}`);
 	}
 
@@ -74,7 +74,7 @@ export function bcdToByte(value: number) {
 }
 
 export function byteToBCD(value: number) {
-	if(value >= 100) {
+	if (value >= 100) {
 		throw new Error(`Invalid value for bcd convertion:  ${value}`);
 	}
 
