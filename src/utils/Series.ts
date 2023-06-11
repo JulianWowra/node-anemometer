@@ -25,7 +25,15 @@ export class Series<T> {
 
 	getData(offset: number) {
 		const ts = this.getUnixTS() - offset;
-		return this.data.filter((data) => data.timestamp >= ts).sort((a, b) => (a.timestamp >= b.timestamp ? 1 : -1));
+		const result: DataRecord<T>[] = [];
+
+		for (const x of this.data) {
+			if (x.timestamp >= ts) {
+				result.push(x);
+			}
+		}
+
+		return result;
 	}
 
 	async cleanUp() {
