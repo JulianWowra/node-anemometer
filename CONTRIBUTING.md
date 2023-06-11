@@ -6,7 +6,7 @@
 
 Please use the following tools for development:
 
-- [NodeJS v16](https://nodejs.org/en/)
+- [NodeJS v18](https://nodejs.org/en/)
 - [yarn](https://yarnpkg.com/)
 - [.editorconfig](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
 - [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
