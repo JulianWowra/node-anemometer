@@ -866,6 +866,11 @@ semver@^7.3.7:
   dependencies:
     lru-cache "^6.0.0"
 
+set-interval-async@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/set-interval-async/-/set-interval-async-3.0.3.tgz#99dd13098eebc2bf1ad0b22e03fe25c516b982c3"
+  integrity sha512-o4DyBv6mko+A9cH3QKek4SAAT5UyJRkfdTi6JHii6ZCKUYFun8SwgBmQrOXd158JOwBQzA+BnO8BvT64xuCaSw==
+
 shebang-command@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/shebang-command/-/shebang-command-2.0.0.tgz#ccd0af4f8835fbdc265b82461aaf0c36663f34ea"
