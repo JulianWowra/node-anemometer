@@ -82,6 +82,26 @@ export function byteToBCD(value: number) {
 	return ((value / 10) << 4) + (value % 10);
 }
 
+export async function runSave<T extends Promise<unknown>, U = undefined>(
+	promise: T,
+	returnOnFail?: U,
+	onCatch?: (error: unknown) => void
+): Promise<Awaited<T> | U> {
+	try {
+		return await promise;
+	} catch (e) {
+		if (onCatch) {
+			try {
+				onCatch(e);
+			} catch (e) {
+				// do nothing
+			}
+		}
+	}
+
+	return returnOnFail as U;
+}
+
 export function getPulsesFromSeries(series: Series<number>, time: number) {
 	const data = series.getData(time);
 

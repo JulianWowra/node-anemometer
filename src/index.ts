@@ -1,46 +1,52 @@
+import { clearIntervalAsync, setIntervalAsync, SetIntervalAsyncTimer } from 'set-interval-async/dynamic';
 import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
 import { PCF8583 } from './utils/PCF8583';
 import { Series } from './utils/Series';
-import { getPulsesFromSeries, WindSpeed } from './utils/utilities';
+import { getPulsesFromSeries, runSave, WindSpeed } from './utils/utilities';
 
 export class Anemometer {
 	private readonly chip: PCF8583;
-	private readInterval: NodeJS.Timer | null = null;
+	private readInterval: SetIntervalAsyncTimer<[]> | null = null;
 	private dataSeries: Series<number>;
 
 	constructor(private readonly calc: (pulses: number, time: number) => WindSpeed, private readonly opts: AnemometerOptions = {}) {
 		this.chip = new PCF8583(this.opts.address || I2CADDR, this.opts.bus || 1);
 		this.dataSeries = new Series(this.opts.dataSeries?.expirationTime, this.opts.dataSeries?.maxElements);
-		this.init();
+		this.restart();
 	}
 
-	private async init() {
+	async restart() {
 		if (this.readInterval !== null) {
-			clearInterval(this.readInterval);
+			clearIntervalAsync(this.readInterval);
 			this.readInterval = null;
 		}
 
-		await this.chip.reset();
-		await this.chip.setMode(MODE_EVENT_COUNTER);
-		await this.chip.setCount(0);
+		await this.resetChip();
 
-		this.readInterval = setInterval(async () => {
-			try {
-				const count = await this.chip.getCount();
-				this.dataSeries.addData(count);
+		const evaluate = async () => {
+			let count: number | null = null;
 
-				if (count > 900000) {
-					await this.chip.setCount(0);
-					this.dataSeries.addData(0);
-				}
+			for (let i = 0; i < (this.opts.retries ?? 3); i++) {
+				count = await runSave(this.chip.getCount(), null, this.opts.readFailed);
 
-				this.dataSeries.cleanUp();
-			} catch (e) {
-				if (this.opts.readFailed !== undefined) {
-					this.opts.readFailed(e);
+				if (count !== null) {
+					break;
 				}
 			}
-		}, this.opts.readInterval || 1000);
+
+			if (count === null) {
+				return await runSave(this.resetChip());
+			}
+
+			this.dataSeries.addData(count);
+
+			if (count > 900000) {
+				await this.chip.setCount(0);
+				this.dataSeries.addData(0);
+			}
+		};
+
+		this.readInterval = setIntervalAsync(async () => !!this.dataSeries.cleanUp() && (await evaluate()), this.opts.readInterval || 1000);
 	}
 
 	/**
@@ -71,11 +77,19 @@ export class Anemometer {
 
 	async cleanUp() {
 		if (this.readInterval !== null) {
-			clearInterval(this.readInterval);
+			clearIntervalAsync(this.readInterval);
 			this.readInterval = null;
 		}
 
 		await this.chip.cleanUp();
+	}
+
+	private async resetChip() {
+		await this.chip.reset();
+		await this.chip.setMode(MODE_EVENT_COUNTER);
+
+		await this.chip.setCount(0);
+		this.dataSeries.addData(0);
 	}
 }
 
@@ -83,6 +97,7 @@ export interface AnemometerOptions {
 	bus?: number;
 	address?: number;
 	readInterval?: number;
+	retries?: number;
 	readFailed?: (error: unknown) => void;
 	dataSeries?: {
 		expirationTime?: number;
