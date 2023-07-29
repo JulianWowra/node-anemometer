@@ -9,7 +9,10 @@ export class Anemometer {
 	private readInterval: SetIntervalAsyncTimer<[]> | null = null;
 	private dataSeries: Series<number>;
 
-	constructor(private readonly calc: (pulses: number, time: number) => WindSpeed, private readonly opts: AnemometerOptions = {}) {
+	constructor(
+		private readonly calc: (pulses: number, time: number) => WindSpeed,
+		private readonly opts: AnemometerOptions = {}
+	) {
 		this.chip = new PCF8583(this.opts.address || I2CADDR, this.opts.bus || 1);
 		this.dataSeries = new Series(this.opts.dataSeries?.expirationTime, this.opts.dataSeries?.maxElements);
 		this.restart();

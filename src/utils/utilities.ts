@@ -7,7 +7,10 @@ export enum WindSpeedUnits {
 }
 
 export class WindSpeed {
-	constructor(readonly value: number, readonly unit: WindSpeedUnits) {}
+	constructor(
+		readonly value: number,
+		readonly unit: WindSpeedUnits
+	) {}
 
 	rounded(decimalPlaces = 1) {
 		return round(this.value, decimalPlaces);

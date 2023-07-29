@@ -9,11 +9,10 @@ export class Series<T> {
 	 * @param expirationTime Indication after how many seconds a data record loses validity
 	 * @param maxElements Specifies the maximum number of data records to be stored temporarily. 0 is no limit.
 	 */
-	constructor(readonly expirationTime = 600, readonly maxElements = 700) {}
-
-	private getUnixTS() {
-		return Math.floor(new Date().getTime() / 1000);
-	}
+	constructor(
+		readonly expirationTime = 600,
+		readonly maxElements = 700
+	) {}
 
 	addData(value: T) {
 		if (this.maxElements !== 0 && this.data.length >= this.maxElements) {
@@ -52,6 +51,10 @@ export class Series<T> {
 
 			this.data.shift();
 		}
+	}
+
+	private getUnixTS() {
+		return Math.floor(new Date().getTime() / 1000);
 	}
 }
 
