@@ -55,7 +55,7 @@ export class Series<T> {
 	}
 }
 
-export interface DataRecord<T> {
+export type DataRecord<T> = {
 	value: T;
 	timestamp: number;
-}
+};

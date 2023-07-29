@@ -93,7 +93,7 @@ export class Anemometer {
 	}
 }
 
-export interface AnemometerOptions {
+export type AnemometerOptions = {
 	bus?: number;
 	address?: number;
 	readInterval?: number;
@@ -103,7 +103,7 @@ export interface AnemometerOptions {
 		expirationTime?: number;
 		maxElements?: number;
 	};
-}
+};
 
 // Provide legacy support
 export default Anemometer;
