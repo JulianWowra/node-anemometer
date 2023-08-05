@@ -13,18 +13,27 @@ const calc = (pulses: number, time: number): WindSpeed => {
 	return new WindSpeed(windSpeed, WindSpeedUnits.kilometersPerHour);
 };
 
-// With the initialization of the class it starts to measure the wind speed and stores it in a cache
-// Create a maximum of only one instance per anemometer!
+// Initialize the class for your anemometer.
+// Never initialize two classes for the same address on the same bus!
+// For more options on initializing the class, read the documentation
 const myAnemometer = new Anemometer(calc);
 
-// Wait 15 seconds to have a usable average value
-setTimeout(() => {
-	// '.getData()' calculates the average wind speed of the past x seconds
-	const data = myAnemometer.getData(10);
+async function start() {
+	// With the initialization of the class an I2C connection is automatically established.
+	// Now you can start the reading process for the class
+	await myAnemometer.start();
 
-	console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
+	// Wait 15 seconds to have a usable average value
+	setTimeout(() => {
+		// '.getData()' calculates the average wind speed of the past x seconds
+		const data = myAnemometer.getData(10);
 
-	// Herewith you can stop the permanent reading process
-	// After that, the class can no longer be used
-	myAnemometer.cleanUp();
-}, 15000);
+		console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
+
+		// Herewith you can stop the permanent reading process and close the I2C connection.
+		// After that, the class can no longer be used
+		myAnemometer.close();
+	}, 15000);
+}
+
+start();
