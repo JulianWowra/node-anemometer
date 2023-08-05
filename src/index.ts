@@ -52,14 +52,6 @@ export class Anemometer {
 		this.readInterval = setIntervalAsync(async () => !!this.dataSeries.cleanUp() && (await evaluate()), this.opts.readInterval || 1000);
 	}
 
-	/**
-	 * Returns an array of numbers, where each number represents the I2C address of a detected device.
-	 * @see https://github.com/fivdi/i2c-bus#busscanstartaddr-endaddr-cb
-	 */
-	async scan() {
-		return this.chip.scan();
-	}
-
 	getData(time: number) {
 		if (time <= 0 || time > this.dataSeries.expirationTime) {
 			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.dataSeries.expirationTime}!`);
@@ -111,4 +103,4 @@ export type AnemometerOptions = {
 // Provide legacy support
 export default Anemometer;
 
-export { calcFactor, WindSpeed, WindSpeedUnits } from './utils/utilities';
+export { calcFactor, scanBus, WindSpeed, WindSpeedUnits } from './utils/utilities';

@@ -1,22 +1,15 @@
 import { I2CBus, openSync } from 'i2c-bus';
-import { promisify } from 'util';
 import { LOCATION_CONTROL, LOCATION_COUNTER, MODE_TEST } from './constants';
 import { bcdToByte, byteToBCD } from './utilities';
 
 export class PCF8583 {
 	private readonly wire: I2CBus;
-	private readonly i2cScan: () => Promise<number[]>;
 
 	constructor(
 		readonly address: number,
 		readonly bus: number
 	) {
 		this.wire = openSync(this.bus);
-		this.i2cScan = promisify(this.wire.scan);
-	}
-
-	async scan() {
-		return this.i2cScan();
 	}
 
 	private async i2cWriteBytes(cmd: number, bytes: number[]) {
@@ -103,11 +96,13 @@ export class PCF8583 {
 
 	async setCount(value: number) {
 		await this.stop();
+
 		await this.i2cWriteBytes(LOCATION_COUNTER, [
 			byteToBCD(value % 100),
 			byteToBCD((value / 100) % 100),
 			byteToBCD((value / 10000) % 100)
 		]);
+
 		await this.start();
 	}
 

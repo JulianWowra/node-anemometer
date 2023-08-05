@@ -1,3 +1,5 @@
+import { openSync } from 'i2c-bus';
+import { promisify } from 'util';
 import { Series } from './Series';
 
 export enum WindSpeedUnits {
@@ -83,6 +85,18 @@ export function byteToBCD(value: number) {
 	}
 
 	return ((value / 10) << 4) + (value % 10);
+}
+
+/**
+ * Returns an array of numbers, where each number represents the I2C address of a detected device.
+ * @see https://github.com/fivdi/i2c-bus#busscanstartaddr-endaddr-cb
+ */
+export async function scanBus(bus: number) {
+	const wire = openSync(bus);
+	const result = await promisify<number[]>(wire.scan)();
+
+	wire.closeSync();
+	return result;
 }
 
 export async function runSave<T extends Promise<unknown>, U = undefined>(
