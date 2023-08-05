@@ -6,8 +6,8 @@ import { getPulsesFromSeries, runSave, WindSpeed } from './utils/utilities';
 
 export class Anemometer {
 	private readonly chip: PCF8583;
+	private readonly dataSeries: Series<number>;
 	private readInterval: SetIntervalAsyncTimer<[]> | null = null;
-	private dataSeries: Series<number>;
 
 	constructor(
 		private readonly calc: (pulses: number, time: number) => WindSpeed,
