@@ -116,7 +116,7 @@ export class PCF8583 {
 		return count;
 	}
 
-	async cleanUp() {
+	async close() {
 		await this.stop();
 		this.wire.closeSync();
 	}

@@ -15,12 +15,12 @@ export class Anemometer {
 	) {
 		this.chip = new PCF8583(this.opts.address || I2CADDR, this.opts.bus || 1);
 		this.dataSeries = new Series(this.opts.dataSeries?.expirationTime, this.opts.dataSeries?.maxElements);
-		this.restart();
 	}
 
-	async restart() {
+
+	async start() {
 		if (this.readInterval !== null) {
-			clearIntervalAsync(this.readInterval);
+			await clearIntervalAsync(this.readInterval);
 			this.readInterval = null;
 		}
 
@@ -63,6 +63,7 @@ export class Anemometer {
 	}
 
 	isReady() {
+	async close() {
 		if (this.readInterval !== null) {
 			return true;
 		}
@@ -70,13 +71,11 @@ export class Anemometer {
 		return false;
 	}
 
-	async cleanUp() {
-		if (this.readInterval !== null) {
-			clearIntervalAsync(this.readInterval);
+			await clearIntervalAsync(this.readInterval);
 			this.readInterval = null;
 		}
 
-		await this.chip.cleanUp();
+		await this.chip.close();
 	}
 
 	private async resetChip() {
