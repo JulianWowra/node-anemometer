@@ -17,6 +17,9 @@ export class Anemometer {
 		this.dataSeries = new Series(this.opts.dataSeries?.expirationTime, this.opts.dataSeries?.maxElements);
 	}
 
+	get isReady() {
+		return this.readInterval !== null;
+	}
 
 	async start() {
 		if (this.readInterval !== null) {
@@ -62,15 +65,8 @@ export class Anemometer {
 		return this.calc(pulses, duration);
 	}
 
-	isReady() {
 	async close() {
 		if (this.readInterval !== null) {
-			return true;
-		}
-
-		return false;
-	}
-
 			await clearIntervalAsync(this.readInterval);
 			this.readInterval = null;
 		}
