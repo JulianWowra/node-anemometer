@@ -19,9 +19,8 @@ const calc = (pulses: number, time: number): WindSpeed => {
 const myAnemometer = new Anemometer(calc);
 
 async function start() {
-	// With the initialization of the class an I2C connection is automatically established.
-	// Now you can start the reading process for the class
-	await myAnemometer.start();
+	// Establish an i2c connection to the PCF8583 and start the reading process
+	await myAnemometer.open();
 
 	// Wait 15 seconds to have a usable average value
 	setTimeout(() => {
@@ -30,8 +29,7 @@ async function start() {
 
 		console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
 
-		// Herewith you can stop the permanent reading process and close the I2C connection.
-		// After that, the class can no longer be used
+		// Herewith you can stop the reading process and close the i2c connection
 		myAnemometer.close();
 	}, 15000);
 }
