@@ -21,12 +21,13 @@ export class Anemometer {
 		return this.readInterval !== null;
 	}
 
-	async start() {
+	async open() {
 		if (this.readInterval !== null) {
 			await clearIntervalAsync(this.readInterval);
 			this.readInterval = null;
 		}
 
+		await this.chip.open();
 		await this.resetChip();
 
 		const evaluate = async () => {

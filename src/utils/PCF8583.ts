@@ -3,20 +3,21 @@ import { LOCATION_CONTROL, LOCATION_COUNTER, MODE_TEST } from './constants';
 import { bcdToByte, byteToBCD } from './utilities';
 
 export class PCF8583 {
-	private readonly wire: I2CBus;
-
+	private wire: I2CBus | null = null;
 	constructor(
 		readonly address: number,
 		readonly bus: number
-	) {
-		this.wire = openSync(this.bus);
-	}
+	) {}
 
-	private async i2cWriteBytes(cmd: number, bytes: number[]) {
+	private async i2cWriteBytes(register: number, bytes: number[]) {
 		const buff = Buffer.from(bytes);
 
 		return new Promise<void>((resolve, reject) => {
-			this.wire.writeI2cBlock(this.address, cmd, buff.length, buff, (err) => {
+			if (!this.wire) {
+				throw new Error('Open a connection before you can access the bus!');
+			}
+
+			this.wire.writeI2cBlock(this.address, register, buff.length, buff, (err) => {
 				if (err) {
 					reject(err);
 					return;
@@ -27,11 +28,15 @@ export class PCF8583 {
 		});
 	}
 
-	private async i2cReadBytes(cmd: number, length: number) {
+	private async i2cReadBytes(register: number, length: number) {
 		const buff = Buffer.alloc(length);
 
 		return await new Promise<Buffer>((resolve, reject) => {
-			this.wire.readI2cBlock(this.address, cmd, buff.length, buff, (err, _bytesRead, buffer) => {
+			if (!this.wire) {
+				throw new Error('Open a connection before you can access the bus!');
+			}
+
+			this.wire.readI2cBlock(this.address, register, buff.length, buff, (err, _bytesRead, buffer) => {
 				if (err) {
 					reject(err);
 					return;
@@ -42,33 +47,50 @@ export class PCF8583 {
 		});
 	}
 
-	private async getRegister(offset: number) {
+	private async i2cReadRegister(offset: number) {
 		return (await this.i2cReadBytes(offset, 1))[0];
 	}
 
-	private async setRegister(offset: number, value: number) {
+	private async i2cWriteRegister(offset: number, value: number) {
 		await this.i2cWriteBytes(offset, [value]);
 	}
 
 	private async start() {
-		let control = await this.getRegister(LOCATION_CONTROL);
+		let control = await this.i2cReadRegister(LOCATION_CONTROL);
 		control &= 0x7f;
 
-		await this.setRegister(LOCATION_CONTROL, control);
+		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
 
 	private async stop() {
-		let control = await this.getRegister(LOCATION_CONTROL);
+		let control = await this.i2cReadRegister(LOCATION_CONTROL);
 		control |= 0x80;
 
-		await this.setRegister(LOCATION_CONTROL, control);
+		await this.i2cWriteRegister(LOCATION_CONTROL, control);
+	}
+	async open() {
+		if (this.wire) {
+			return;
+		}
+
+		this.wire = openSync(this.bus);
 	}
 
+	async close() {
+		if (!this.wire) {
+			return;
+		}
+
+		await this.stop();
+
+		this.wire.closeSync();
+		this.wire = null;
+	}
 	async setMode(mode: number) {
-		let control = await this.getRegister(LOCATION_CONTROL);
+		let control = await this.i2cReadRegister(LOCATION_CONTROL);
 		control = (control & ~MODE_TEST) | (mode & MODE_TEST);
 
-		await this.setRegister(LOCATION_CONTROL, control);
+		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
 
 	async reset() {
@@ -114,10 +136,5 @@ export class PCF8583 {
 		count += bcdToByte(read[2]) * 10000;
 
 		return count;
-	}
-
-	async close() {
-		await this.stop();
-		this.wire.closeSync();
 	}
 }
