@@ -4,10 +4,23 @@ import { bcdToByte, byteToBCD } from './utilities';
 
 export class PCF8583 {
 	private wire: I2CBus | null = null;
+
+	/**
+	 * Creates an instance of PCF8583.
+	 *
+	 * @param {number} address The I2C address of the PCF8583 module.
+	 * @param {number} bus The I2C bus number.
+	 */
 	constructor(
 		readonly address: number,
 		readonly bus: number
 	) {}
+
+	/*
+	 * ==========================================
+	 *             Private functions
+	 * ==========================================
+	 */
 
 	private async i2cWriteBytes(register: number, bytes: number[]) {
 		const buff = Buffer.from(bytes);
@@ -68,6 +81,19 @@ export class PCF8583 {
 
 		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
+
+	/*
+	 * ==========================================
+	 *              Public functions
+	 * ==========================================
+	 */
+
+	/**
+	 * Opens the I2C connection to the PCF8583 module.
+	 *
+	 * @async
+	 * @returns {Promise<void>} Resolves when the connection is successfully opened.
+	 */
 	async open() {
 		if (this.wire) {
 			return;
@@ -76,6 +102,12 @@ export class PCF8583 {
 		this.wire = openSync(this.bus);
 	}
 
+	/**
+	 * Closes the I2C connection to the PCF8583 module and stops the clock.
+	 *
+	 * @async
+	 * @returns {Promise<void>} Resolves when the connection is successfully closed.
+	 */
 	async close() {
 		if (!this.wire) {
 			return;
@@ -86,6 +118,14 @@ export class PCF8583 {
 		this.wire.closeSync();
 		this.wire = null;
 	}
+
+	/**
+	 * Sets the clock mode of the PCF8583 module.
+	 *
+	 * @async
+	 * @param {number} mode The mode to set.
+	 * @returns {Promise<void>} Resolves when the mode is successfully set.
+	 */
 	async setMode(mode: number) {
 		let control = await this.i2cReadRegister(LOCATION_CONTROL);
 		control = (control & ~MODE_TEST) | (mode & MODE_TEST);
@@ -93,6 +133,12 @@ export class PCF8583 {
 		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
 
+	/**
+	 * Resets the PCF8583 module to its default values.
+	 *
+	 * @async
+	 * @returns {Promise<void>} Resolves when the module is successfully reset.
+	 */
 	async reset() {
 		await this.i2cWriteBytes(LOCATION_CONTROL, [
 			0x04, // 00 control/status (alarm enabled by default)
@@ -116,6 +162,13 @@ export class PCF8583 {
 		]);
 	}
 
+	/**
+	 * Sets the counter value of the PCF8583 module.
+	 *
+	 * @async
+	 * @param {number} value The value to set in the counter.
+	 * @returns {Promise<void>} Resolves when the counter value is successfully set.
+	 */
 	async setCount(value: number) {
 		await this.stop();
 
@@ -128,6 +181,12 @@ export class PCF8583 {
 		await this.start();
 	}
 
+	/**
+	 * Retrieves the current counter value from the PCF8583 module.
+	 *
+	 * @async
+	 * @returns {Promise<number>} Resolves with the current counter value.
+	 */
 	async getCount() {
 		const read = await this.i2cReadBytes(LOCATION_COUNTER, 3);
 

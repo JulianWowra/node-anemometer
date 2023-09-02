@@ -24,7 +24,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"baseUrl": "src",
 		"importHelpers": true,
-		"removeComments": true,
+		"removeComments": false,
 		"skipLibCheck": true,
 		"resolveJsonModule": true
 	},
