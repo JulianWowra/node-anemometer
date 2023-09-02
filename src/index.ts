@@ -1,12 +1,12 @@
 import { clearIntervalAsync, setIntervalAsync, SetIntervalAsyncTimer } from 'set-interval-async/dynamic';
 import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
+import { History } from './utils/History';
 import { PCF8583 } from './utils/PCF8583';
-import { Series } from './utils/Series';
-import { getPulsesFromSeries, runSave, WindSpeed } from './utils/utilities';
+import { runSave, sumPulsesFromHistory, WindSpeed } from './utils/utilities';
 
 export class Anemometer {
 	private readonly chip: PCF8583;
-	private readonly dataSeries: Series<number>;
+	private readonly history: History<number>;
 	private readInterval: SetIntervalAsyncTimer<[]> | null = null;
 
 	constructor(
@@ -14,7 +14,7 @@ export class Anemometer {
 		private readonly opts: AnemometerOptions = {}
 	) {
 		this.chip = new PCF8583(this.opts.address || I2CADDR, this.opts.bus || 1);
-		this.dataSeries = new Series(this.opts.dataSeries?.expirationTime, this.opts.dataSeries?.maxElements);
+		this.history = new History(this.opts.history?.expirationTime, this.opts.history?.maxElements);
 	}
 
 	get isReady() {
@@ -45,23 +45,23 @@ export class Anemometer {
 				return await runSave(this.resetChip());
 			}
 
-			this.dataSeries.addData(count);
+			this.history.push(count);
 
 			if (count > 900000) {
 				await this.chip.setCount(0);
-				this.dataSeries.addData(0);
+				this.history.push(0);
 			}
 		};
 
-		this.readInterval = setIntervalAsync(async () => !!this.dataSeries.cleanUp() && (await evaluate()), this.opts.readInterval || 1000);
+		this.readInterval = setIntervalAsync(async () => !!this.history.clean() && (await evaluate()), this.opts.readInterval || 1000);
 	}
 
 	getData(time: number) {
-		if (time <= 0 || time > this.dataSeries.expirationTime) {
-			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.dataSeries.expirationTime}!`);
+		if (time <= 0 || time > this.history.expirationTime) {
+			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.history.expirationTime}!`);
 		}
 
-		const { pulses, duration } = getPulsesFromSeries(this.dataSeries, time);
+		const { pulses, duration } = sumPulsesFromHistory(this.history, time);
 
 		return this.calc(pulses, duration);
 	}
@@ -80,7 +80,7 @@ export class Anemometer {
 		await this.chip.setMode(MODE_EVENT_COUNTER);
 
 		await this.chip.setCount(0);
-		this.dataSeries.addData(0);
+		this.history.push(0);
 	}
 }
 
@@ -90,7 +90,7 @@ export type AnemometerOptions = {
 	readInterval?: number;
 	retries?: number;
 	readFailed?: (error: unknown) => void;
-	dataSeries?: {
+	history?: {
 		expirationTime?: number;
 		maxElements?: number;
 	};

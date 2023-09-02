@@ -1,4 +1,4 @@
-export class Series<T> {
+export class History<T> {
 	/**
 	 * **Flow direction:**
 	 * old data  <--  new data
@@ -14,7 +14,7 @@ export class Series<T> {
 		readonly maxElements = 700
 	) {}
 
-	addData(value: T) {
+	push(value: T) {
 		if (this.maxElements !== 0 && this.data.length >= this.maxElements) {
 			this.data.shift();
 		}
@@ -22,7 +22,7 @@ export class Series<T> {
 		this.data.push({ value, timestamp: this.getUnixTS() });
 	}
 
-	getData(offset: number) {
+	get(offset: number) {
 		const ts = this.getUnixTS() - offset;
 		const result: DataRecord<T>[] = [];
 
@@ -35,7 +35,7 @@ export class Series<T> {
 		return result;
 	}
 
-	async cleanUp() {
+	async clean() {
 		if (this.maxElements !== 0) {
 			while (this.data.length > this.maxElements) {
 				this.data.shift();

@@ -1,6 +1,6 @@
 import { openSync } from 'i2c-bus';
 import { promisify } from 'util';
-import { Series } from './Series';
+import { History } from './History';
 
 export enum WindSpeedUnits {
 	kilometersPerHour = 'km/h',
@@ -119,8 +119,8 @@ export async function runSave<T extends Promise<unknown>, U = undefined>(
 	return returnOnFail as U;
 }
 
-export function getPulsesFromSeries(series: Series<number>, time: number) {
-	const data = series.getData(time);
+export function sumPulsesFromHistory(history: History<number>, time: number) {
+	const data = history.get(time);
 
 	if (data.length === 0) {
 		return { pulses: 0, duration: 0 };
