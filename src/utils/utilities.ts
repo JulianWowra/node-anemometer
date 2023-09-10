@@ -107,12 +107,18 @@ export function round(value: number, decimalPlaces: number) {
 /**
  * Calculates the animeter factor based on radius and adjustment.
  *
- * @param {number} radius The radius.
- * @param {number} adjustment The adjustment value.
+ * __Calculation explained:__
+ * 1. Scope calculation (π * r * 2)
+ * 2. Convert centimeter to kilometer ( / 100000)
+ * 3. Convert to kilometers per hour ( * 3600)
+ * 4. Multiply adjustment
+ *
+ * @param {number} radius Radius between midpoint and edge of a cup in centimeters.
+ * @param {number} adjustment Power loss due to mechanics (approximately 1.18).
  * @returns {number} The calculated factor.
  */
 export function calcFactor(radius: number, adjustment: number) {
-	return ((2 * Math.PI * radius) / 100000) * 3600 * adjustment;
+	return ((Math.PI * radius * 2) / 100000) * 3600 * adjustment;
 }
 
 /**
