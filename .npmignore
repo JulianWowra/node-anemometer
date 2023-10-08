@@ -1,14 +1,15 @@
 .git
 .github
-docs
 examples
 images
+docs
 node_modules
 src
 .editorconfig
 .eslintrc.js
 .gitignore
 .npmignore
+.prettierignore
 .prettierrc.js
 CONTRIBUTING.md
 tsconfig.json

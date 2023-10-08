@@ -4,11 +4,11 @@
 
 ## Install
 
-```sh
+```
 npm install node-anemometer
 ```
 
-```sh
+```
 yarn add node-anemometer
 ```
 
@@ -28,77 +28,51 @@ There are several ways to count the revolutions of the anemometer. The best resu
 
 ## Usage
 
+Example in TypeScript (with ES Modules):
+
 _Examples in the calculation not adjusted to your anemometer_
 
-### Example for TypeScript (with ES Modules):
-
 ```typescript
-import { Anemometer, calcFactor, WindSpeed, WindSpeedUnits } from 'node-anemometer';
+import { Anemometer, calcFactor, WindSpeed, WindSpeedUnits } from '../../dist';
 
 const calc = (pulses: number, time: number): WindSpeed => {
-	// You cannot divide by 0
-	if (time <= 0) {
-		return new WindSpeed(0, WindSpeedUnits.kilometersPerHour);
-	}
+  // You cannot divide by 0
+  if (time <= 0) {
+    return new WindSpeed(0, WindSpeedUnits.kilometersPerHour);
+  }
 
-	// More about the calculation can you find below
-	const windSpeed = (pulses / 2 / time) * calcFactor(9, 1.18);
+  // More about the calculation can you find in the readme file
+  const windSpeed = (pulses / 2 / time) * calcFactor(9, 1.18);
 
-	// You must always return a class of the type WindSpeed
-	return new WindSpeed(windSpeed, WindSpeedUnits.kilometersPerHour);
+  // You must always return a class of the type WindSpeed
+  return new WindSpeed(windSpeed, WindSpeedUnits.kilometersPerHour);
 };
 
-// With the initialization of the class it starts to measure the wind speed and stores it in a cache
-// Create a maximum of only one instance per anemometer!
+// Initialize the class for your anemometer.
+// Never initialize two classes for the same address on the same bus!
+// For more options on initializing the class, read the documentation
 const myAnemometer = new Anemometer(calc);
 
-// Wait 15 seconds to have a usable average value
-setTimeout(() => {
-	// '.getData()' calculates the average wind speed of the past x seconds
-	const data = myAnemometer.getData(10);
+async function start() {
+  // Establish an i2c connection to the PCF8583 and start the reading process
+  await myAnemometer.open();
 
-	console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
+  // Wait 15 seconds to have a usable average value
+  setTimeout(() => {
+    // '.getData()' calculates the average wind speed of the past x seconds
+    const data = myAnemometer.getData(10);
 
-	// Herewith you can stop the permanent reading process
-	// After that, the class can no longer be used
-	myAnemometer.cleanUp();
-}, 15000);
+    console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
+
+    // Herewith you can stop the reading process and close the i2c connection
+    myAnemometer.close();
+  }, 15000);
+}
+
+start();
 ```
 
-### Example for JavaScript (with CommonJS):
-
-```js
-const { Anemometer, WindSpeed, WindSpeedUnits, calcFactor } = require('node-anemometer');
-
-const calc = (pulses, time) => {
-	// You cannot divide by 0
-	if (time <= 0) {
-		return new WindSpeed(0, WindSpeedUnits.kilometersPerHour);
-	}
-
-	// More about the calculation can you find below
-	const windSpeed = (pulses / 2 / time) * calcFactor(9, 1.18);
-
-	// You must always return a class of the type WindSpeed
-	return new WindSpeed(windSpeed, WindSpeedUnits.kilometersPerHour);
-};
-
-// With the initialization of the class it starts to measure the wind speed and stores it in a cache
-// Create a maximum of only one instance per anemometer!
-const myAnemometer = new Anemometer(calc);
-
-// Wait 15 seconds to have a usable average value
-setTimeout(() => {
-	// '.getData()' calculates the average wind speed of the past x seconds
-	const data = myAnemometer.getData(10);
-
-	console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
-
-	// Herewith you can stop the permanent reading process
-	// After that, the class can no longer be used
-	myAnemometer.cleanUp();
-}, 15000);
-```
+You can find more information in the full [documentation 📖](https://killerjulian.github.io/node-anemometer/).
 
 ### Calculation
 
@@ -123,10 +97,6 @@ The following basic equation applies:
 The `.calcFactor()` function computes the multiplier for the calculation of the wind speed in km/h. The radius (measured distance from the center to the edge of one of the cups) in cm and the anemometer factor. The anemometer factor is a value to compensate for the lost wind energy when turning the arms. In my case this value is `1.18`.
 
 ![](./images/anemometer.svg)
-
-## TypeDoc
-
-Click [here](https://killerjulian.github.io/node-anemometer/)
 
 ---
 

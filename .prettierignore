@@ -1,4 +1,5 @@
 dist
+images
 docs
 node_modules
 npm-debug.log*
