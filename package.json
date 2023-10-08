@@ -14,16 +14,16 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/node": "^16.18.47",
+		"@types/node": "^16.18.58",
 		"@droppedcode/typedoc-plugin-copy-assets": "~1.0.9",
 		"@types/i2c-bus": "^5.1.0",
-		"@typescript-eslint/eslint-plugin": "6.5.0",
-		"@typescript-eslint/parser": "6.5.0",
+		"@typescript-eslint/eslint-plugin": "6.7.4",
+		"@typescript-eslint/parser": "6.7.4",
 		"eslint-config-prettier": "9.0.0",
-		"eslint": "8.48.0",
+		"eslint": "8.51.0",
 		"prettier": "3.0.3",
-		"typedoc": "~0.25.0",
-		"typescript": "5.1.6"
+		"typedoc": "~0.25.2",
+		"typescript": "5.2.2"
 	},
 	"scripts": {
 		"build": "yarn build:lib && yarn build:docs",
