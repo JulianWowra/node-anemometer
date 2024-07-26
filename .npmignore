@@ -1,17 +1,8 @@
-.git
-.github
-examples
-images
-docs
-node_modules
-src
-.editorconfig
-.eslintrc.js
-.gitignore
-.npmignore
-.prettierignore
-.prettierrc.js
-CONTRIBUTING.md
-tsconfig.json
-typedoc.css
-yarn.lock
+# Ignore everything by default
+*
+
+# Include specific directories and files
+!dist/**/*
+!LICENSE
+!package.json
+!README.md

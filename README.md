@@ -9,6 +9,10 @@ npm install node-anemometer
 ```
 
 ```
+pnpm install node-anemometer
+```
+
+```
 yarn add node-anemometer
 ```
 

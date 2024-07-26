@@ -8,31 +8,30 @@
 	"homepage": "https://killerjulian.github.io/node-anemometer",
 	"author": "KillerJulian <info@killerjulian.de>",
 	"license": "MIT",
+	"packageManager": "pnpm@9.6.0",
 	"dependencies": {
 		"i2c-bus": "^5.2.3",
 		"set-interval-async": "^3.0.3",
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.3"
 	},
 	"devDependencies": {
-		"@types/node": "^16.18.58",
-		"@droppedcode/typedoc-plugin-copy-assets": "~1.0.9",
-		"@types/i2c-bus": "^5.1.0",
-		"@typescript-eslint/eslint-plugin": "6.7.4",
-		"@typescript-eslint/parser": "6.7.4",
-		"eslint-config-prettier": "9.0.0",
-		"eslint": "8.51.0",
-		"prettier": "3.0.3",
-		"typedoc": "~0.25.2",
-		"typescript": "5.2.2"
+		"@types/i2c-bus": "^5.1.2",
+		"@types/node": "^16.18.104",
+		"eslint": "9.7.0",
+		"eslint-config-prettier": "9.1.0",
+		"prettier": "3.3.3",
+		"typedoc": "~0.26.5",
+		"typedoc-github-theme": "^0.1.1",
+		"typescript": "5.5.4",
+		"typescript-eslint": "8.0.0-alpha.54"
 	},
 	"scripts": {
-		"build": "yarn build:lib && yarn build:docs",
+		"build": "pnpm build:lib && pnpm build:docs",
 		"build:lib": "tsc",
-		"build:docs": "typedoc --entryPoints src/index.ts --out docs --excludePrivate --customCss ./typedoc.css --plugin @droppedcode/typedoc-plugin-copy-assets",
-		"lint": "yarn lint:format && yarn lint:code",
+		"build:docs": "typedoc src --plugin typedoc-github-theme --theme typedoc-github-theme",
+		"lint": "pnpm lint:code && pnpm lint:format",
 		"lint:format": "prettier --check .",
-		"lint:code": "eslint src --ext .ts",
-		"prepack": "yarn build:lib"
+		"lint:code": "eslint ."
 	},
 	"engines": {
 		"node": ">=16.0.0"
