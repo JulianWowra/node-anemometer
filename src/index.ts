@@ -1,6 +1,7 @@
-import { clearIntervalAsync, setIntervalAsync, SetIntervalAsyncTimer } from 'set-interval-async/dynamic';
+import type { SetIntervalAsyncTimer } from 'set-interval-async/dynamic';
+import { clearIntervalAsync, setIntervalAsync } from 'set-interval-async/dynamic';
 import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
-import { History } from './utils/History';
+import { type GetDataConditions, History, type TimeCondition } from './utils/History';
 import { PCF8583 } from './utils/PCF8583';
 import { runSave, sumPulsesFromHistory, WindSpeed } from './utils/utilities';
 
@@ -17,14 +18,14 @@ export class Anemometer {
 	/**
 	 * Creates an instance of the Anemometer class, which interfaces with a PCF8583 module.
 	 *
-	 * @param {(pulses: number, time: number) => WindSpeed} calc A function that calculates WindSpeed based on pulse count and time.
-	 * @param {AnemometerOptions} opts Optional configuration options for the Anemometer.
+	 * @param calc A function that calculates WindSpeed based on pulse count and time.
+	 * @param opts Optional configuration options for the Anemometer.
 	 */
 	constructor(
 		private readonly calc: (pulses: number, time: number) => WindSpeed,
 		private readonly opts: AnemometerOptions = {}
 	) {
-		this.chip = new PCF8583(this.opts.address || I2CADDR, this.opts.bus || 1);
+		this.chip = new PCF8583(this.opts.address ?? I2CADDR, this.opts.bus ?? 1);
 		this.history = new History(this.opts.history?.expirationTime, this.opts.history?.maxElements);
 	}
 
@@ -32,17 +33,41 @@ export class Anemometer {
 	 * Indicator of whether a connection has been established and the data is being read..
 	 *
 	 * @readonly
-	 * @returns {boolean} `true` if the connection is ready; otherwise, `false`.
+	 * @returns `true` if the connection is ready; otherwise, `false`.
 	 */
 	get isReady() {
 		return this.readInterval !== null;
 	}
 
+	/*
+	 * ==========================================
+	 *             Private functions
+	 * ==========================================
+	 */
+
+	/**
+	 * Resets the PCF8583 chip to its default values and initializes it for event counting mode.
+	 *
+	 * @returns A promise that resolves when the chip is successfully reset and initialized.
+	 */
+	private async resetChip() {
+		await this.chip.reset();
+		await this.chip.setMode(MODE_EVENT_COUNTER);
+
+		await this.chip.setCount(0);
+		this.history.push(0);
+	}
+
+	/*
+	 * ==========================================
+	 *              Public functions
+	 * ==========================================
+	 */
+
 	/**
 	 * Opens the i2c connection and start the reading data.
 	 *
-	 * @async
-	 * @returns {Promise<void>} A promise that resolves when the connection is successfully opened.
+	 * @returns A promise that resolves when the connection is successfully opened.
 	 */
 	async open() {
 		if (this.readInterval !== null) {
@@ -53,7 +78,7 @@ export class Anemometer {
 		await this.chip.open();
 		await this.resetChip();
 
-		const evaluate = async () => {
+		this.readInterval = setIntervalAsync(async () => {
 			let count: number | null = null;
 
 			for (let i = 0; i < (this.opts.retries ?? 3); i++) {
@@ -68,22 +93,22 @@ export class Anemometer {
 				return await runSave(this.resetChip());
 			}
 
+			this.history.clean();
 			this.history.push(count);
 
 			if (count > 900000) {
 				await this.chip.setCount(0);
 				this.history.push(0);
 			}
-		};
-
-		this.readInterval = setIntervalAsync(async () => !!this.history.clean() && (await evaluate()), this.opts.readInterval || 1000);
+		}, this.opts.readInterval ?? 1000);
 	}
 
 	/**
 	 *  Calculates the average wind speed of the past x seconds.
 	 *
-	 * @param {number} time The offset for which to retrieve wind speed data.
-	 * @returns {WindSpeed} The average WindSpeed data for the specified time.
+	 * @deprecated Use `.getAverageWindSpeed()` instead of `.getData()`
+	 * @param time The offset for which to retrieve wind speed data.
+	 * @returns The average WindSpeed data for the specified time.
 	 */
 	getData(time: number) {
 		if (time <= 0 || time > this.history.expirationTime) {
@@ -98,8 +123,7 @@ export class Anemometer {
 	/**
 	 * Closes the i2c connection and stops reading prozess.
 	 *
-	 * @async
-	 * @returns {Promise<void>} A promise that resolves when the Anemometer is successfully closed.
+	 * @returns A promise that resolves when the Anemometer is successfully closed.
 	 */
 	async close() {
 		if (this.readInterval !== null) {
@@ -108,21 +132,6 @@ export class Anemometer {
 		}
 
 		await this.chip.close();
-	}
-
-	/**
-	 * Resets the PCF8583 chip to its default values and initializes it for event counting mode.
-	 *
-	 * @private
-	 * @async
-	 * @returns {Promise<void>} A promise that resolves when the chip is successfully reset and initialized.
-	 */
-	private async resetChip() {
-		await this.chip.reset();
-		await this.chip.setMode(MODE_EVENT_COUNTER);
-
-		await this.chip.setCount(0);
-		this.history.push(0);
 	}
 }
 
@@ -144,4 +153,5 @@ export type AnemometerOptions = {
 // Provide legacy support
 export default Anemometer;
 
+export type { GetDataConditions, DataRecord as HistoryDataRecord, TimeCondition } from './utils/History';
 export { calcFactor, scanBus, WindSpeed, WindSpeedUnits } from './utils/utilities';

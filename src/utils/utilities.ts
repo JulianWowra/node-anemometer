@@ -1,6 +1,5 @@
 import { openSync } from 'i2c-bus';
-import { promisify } from 'util';
-import { History } from './History';
+import type { DataRecord } from './History';
 
 export enum WindSpeedUnits {
 	kilometersPerHour = 'km/h',
@@ -15,8 +14,8 @@ export class WindSpeed {
 	/**
 	 * Creates an instance of WindSpeed with a numeric value and unit type.
 	 *
-	 * @param {number} value The numeric value of the WindSpeed.
-	 * @param {WindSpeedUnits} unit The unit type (e.g., km/h, m/s, kn).
+	 * @param value The numeric value of the WindSpeed.
+	 * @param unit The unit type (e.g., km/h, m/s, kn).
 	 */
 	constructor(
 		readonly value: number,
@@ -26,8 +25,8 @@ export class WindSpeed {
 	/**
 	 * Rounds the WindSpeed value to a specified number of decimal places.
 	 *
-	 * @param {number} decimalPlaces The number of decimal places to round to.
-	 * @returns {number} The rounded WindSpeed value.
+	 * @param decimalPlaces The number of decimal places to round to.
+	 * @returns The rounded WindSpeed value.
 	 */
 	rounded(decimalPlaces = 1) {
 		return round(this.value, decimalPlaces);
@@ -36,16 +35,16 @@ export class WindSpeed {
 	/**
 	 * Converts the WindSpeed value to kilometers per hour (km/h).
 	 *
-	 * @returns {WindSpeed} A new WindSpeed instance with the value converted to km/h.
+	 * @returns A new WindSpeed instance with the value converted to km/h.
 	 */
 	toKilometersPerHour() {
 		switch (this.unit) {
-			case WindSpeedUnits.metersPerSecond: {
+			case WindSpeedUnits.metersPerSecond:
 				return new WindSpeed(this.value * 3.6, WindSpeedUnits.kilometersPerHour);
-			}
-			case WindSpeedUnits.knots: {
+
+			case WindSpeedUnits.knots:
 				return new WindSpeed(this.value * 1.852, WindSpeedUnits.kilometersPerHour);
-			}
+
 			default:
 				return this;
 		}
@@ -54,16 +53,16 @@ export class WindSpeed {
 	/**
 	 * Converts the WindSpeed value to meters per second (m/s).
 	 *
-	 * @returns {WindSpeed} A new WindSpeed instance with the value converted to m/s.
+	 * @returns A new WindSpeed instance with the value converted to m/s.
 	 */
 	toMetersPerSecond() {
 		switch (this.unit) {
-			case WindSpeedUnits.kilometersPerHour: {
+			case WindSpeedUnits.kilometersPerHour:
 				return new WindSpeed(this.value / 3.6, WindSpeedUnits.metersPerSecond);
-			}
-			case WindSpeedUnits.knots: {
+
+			case WindSpeedUnits.knots:
 				return new WindSpeed(this.value / 1.944, WindSpeedUnits.metersPerSecond);
-			}
+
 			default:
 				return this;
 		}
@@ -72,16 +71,16 @@ export class WindSpeed {
 	/**
 	 * Converts the WindSpeed value to knots (kn).
 	 *
-	 * @returns {WindSpeed} A new WindSpeed instance with the value converted to knots.
+	 * @returns A new WindSpeed instance with the value converted to knots.
 	 */
 	toKnots() {
 		switch (this.unit) {
-			case WindSpeedUnits.kilometersPerHour: {
+			case WindSpeedUnits.kilometersPerHour:
 				return new WindSpeed(this.value / 1.852, WindSpeedUnits.knots);
-			}
-			case WindSpeedUnits.metersPerSecond: {
+
+			case WindSpeedUnits.metersPerSecond:
 				return new WindSpeed(this.value * 1.944, WindSpeedUnits.knots);
-			}
+
 			default:
 				return this;
 		}
@@ -113,9 +112,9 @@ export function round(value: number, decimalPlaces: number) {
  * 3. Convert to kilometers per hour ( * 3600)
  * 4. Multiply adjustment
  *
- * @param {number} radius Radius between midpoint and edge of a cup in centimeters.
- * @param {number} adjustment Power loss due to mechanics (approximately 1.18).
- * @returns {number} The calculated factor.
+ * @param radius Radius between midpoint and edge of a cup in centimeters.
+ * @param adjustment Power loss due to mechanics (approximately 1.18).
+ * @returns The calculated factor.
  */
 export function calcFactor(radius: number, adjustment: number) {
 	return ((Math.PI * radius * 2) / 100000) * 3600 * adjustment;
@@ -124,8 +123,8 @@ export function calcFactor(radius: number, adjustment: number) {
 /**
  * Converts a Binary-Coded Decimal (BCD) value to a byte.
  *
- * @param {number} value The BCD value to convert.
- * @returns {number} The converted byte value.
+ * @param value The BCD value to convert.
+ * @returns The converted byte value.
  */
 export function bcdToByte(value: number) {
 	if (value >> 4 > 9 || (value & 0x0f) > 9) {
@@ -138,9 +137,9 @@ export function bcdToByte(value: number) {
 /**
  * Converts a byte value to Binary-Coded Decimal (BCD) format.
  *
- * @param {number} value The byte value to convert.
- * @returns {number} The converted BCD value.
- * @throws {Error} If the input value is invalid.
+ * @param value The byte value to convert.
+ * @returns The converted BCD value.
+ * @throws If the input value is invalid.
  */
 export function byteToBCD(value: number) {
 	if (value >= 100) {
@@ -153,12 +152,10 @@ export function byteToBCD(value: number) {
 /**
  * Returns an array of numbers, where each number represents the I2C address of a detected device.
  * @see https://github.com/fivdi/i2c-bus#busscanstartaddr-endaddr-cb
- *
- * @async
  */
-export async function scanBus(bus: number) {
-	const wire = openSync(bus);
-	const result = await promisify<number[]>(wire.scan)();
+export function scanBus(...args: Parameters<typeof openSync>) {
+	const wire = openSync(...args);
+	const result = wire.scanSync();
 
 	wire.closeSync();
 	return result;
@@ -167,11 +164,11 @@ export async function scanBus(bus: number) {
 /**
  * Runs a promise and handles any errors, optionally providing a fallback value.
  *
- * @async
- * @param {Promise<unknown>} promise The promise to run.
- * @param {U} returnOnFail The value to return on failure.
- * @param {(error: unknown) => void} onCatch A callback function to handle errors.
- * @returns {Promise<Awaited<Promise<unknown>> | U>} A promise that resolves with the result of the promise or the fallback value.
+ * @param promise The promise to run.
+ * @param returnOnFail The value to return on failure.
+ * @param onCatch A callback function to handle errors.
+ *
+ * @returns A promise that resolves with the result of the promise or the fallback value.
  */
 export async function runSave<T extends Promise<unknown>, U = undefined>(
 	promise: T,
@@ -184,6 +181,7 @@ export async function runSave<T extends Promise<unknown>, U = undefined>(
 		if (onCatch) {
 			try {
 				onCatch(e);
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			} catch (e) {
 				// do nothing
 			}

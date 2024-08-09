@@ -1,4 +1,4 @@
-import { I2CBus, openSync } from 'i2c-bus';
+import { type I2CBus, open as openConnection, type OpenOptions } from 'i2c-bus';
 import { LOCATION_CONTROL, LOCATION_COUNTER, MODE_TEST } from './constants';
 import { bcdToByte, byteToBCD } from './utilities';
 
@@ -8,12 +8,13 @@ export class PCF8583 {
 	/**
 	 * Creates an instance of PCF8583.
 	 *
-	 * @param {number} address The I2C address of the PCF8583 module.
-	 * @param {number} bus The I2C bus number.
+	 * @param address The I2C address of the PCF8583 module.
+	 * @param bus The I2C bus number.
 	 */
 	constructor(
 		readonly address: number,
-		readonly bus: number
+		readonly bus: number,
+		readonly i2cOptions?: OpenOptions
 	) {}
 
 	/*
@@ -30,10 +31,9 @@ export class PCF8583 {
 				throw new Error('Open a connection before you can access the bus!');
 			}
 
-			this.wire.writeI2cBlock(this.address, register, buff.length, buff, (err) => {
+			this.wire.writeI2cBlock(this.address, register, buff.length, buff, (err: Error) => {
 				if (err) {
-					reject(err);
-					return;
+					return reject(err);
 				}
 
 				resolve();
@@ -49,10 +49,9 @@ export class PCF8583 {
 				throw new Error('Open a connection before you can access the bus!');
 			}
 
-			this.wire.readI2cBlock(this.address, register, buff.length, buff, (err, _bytesRead, buffer) => {
+			this.wire.readI2cBlock(this.address, register, buff.length, buff, (err: Error, _bytesRead, buffer) => {
 				if (err) {
-					reject(err);
-					return;
+					return reject(err);
 				}
 
 				resolve(buffer);
@@ -91,40 +90,56 @@ export class PCF8583 {
 	/**
 	 * Opens the I2C connection to the PCF8583 module.
 	 *
-	 * @async
-	 * @returns {Promise<void>} Resolves when the connection is successfully opened.
+	 * @returns Resolves when the connection is successfully opened.
+	 * @throws If the i2c connection is allready opened.
 	 */
 	async open() {
-		if (this.wire) {
-			return;
-		}
+		this.wire = await new Promise<I2CBus>((resolve, reject) => {
+			if (this.wire) {
+				return reject(new Error('Connection already open.'));
+			}
 
-		this.wire = openSync(this.bus);
+			resolve(
+				openConnection(this.bus, this.i2cOptions ?? { forceAccess: false }, (err: Error) => {
+					if (err) {
+						reject(err);
+					}
+				})
+			);
+		});
 	}
 
 	/**
 	 * Closes the I2C connection to the PCF8583 module and stops the clock.
 	 *
-	 * @async
-	 * @returns {Promise<void>} Resolves when the connection is successfully closed.
+	 * @returns  Resolves when the connection is successfully closed.
+	 * @throws If the i2c connection is allready closed.
 	 */
 	async close() {
-		if (!this.wire) {
-			return;
+		if (this.wire) {
+			await this.stop();
 		}
 
-		await this.stop();
+		this.wire = await new Promise<null>((resolve, reject) => {
+			if (!this.wire) {
+				return reject(new Error('Connection already closed.'));
+			}
 
-		this.wire.closeSync();
-		this.wire = null;
+			this.wire.close((err: Error) => {
+				if (err) {
+					reject(err);
+				}
+			});
+
+			resolve(null);
+		});
 	}
 
 	/**
 	 * Sets the clock mode of the PCF8583 module.
 	 *
-	 * @async
-	 * @param {number} mode The mode to set.
-	 * @returns {Promise<void>} Resolves when the mode is successfully set.
+	 * @param mode The mode to set.
+	 * @returns Resolves when the mode is successfully set.
 	 */
 	async setMode(mode: number) {
 		let control = await this.i2cReadRegister(LOCATION_CONTROL);
@@ -136,8 +151,7 @@ export class PCF8583 {
 	/**
 	 * Resets the PCF8583 module to its default values.
 	 *
-	 * @async
-	 * @returns {Promise<void>} Resolves when the module is successfully reset.
+	 * @returns Resolves when the module is successfully reset.
 	 */
 	async reset() {
 		await this.i2cWriteBytes(LOCATION_CONTROL, [
@@ -165,9 +179,8 @@ export class PCF8583 {
 	/**
 	 * Sets the counter value of the PCF8583 module.
 	 *
-	 * @async
-	 * @param {number} value The value to set in the counter.
-	 * @returns {Promise<void>} Resolves when the counter value is successfully set.
+	 * @param value The value to set in the counter.
+	 * @returns Resolves when the counter value is successfully set.
 	 */
 	async setCount(value: number) {
 		await this.stop();
@@ -184,8 +197,7 @@ export class PCF8583 {
 	/**
 	 * Retrieves the current counter value from the PCF8583 module.
 	 *
-	 * @async
-	 * @returns {Promise<number>} Resolves with the current counter value.
+	 * @returns Resolves with the current counter value.
 	 */
 	async getCount() {
 		const read = await this.i2cReadBytes(LOCATION_COUNTER, 3);
