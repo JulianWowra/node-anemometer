@@ -3,7 +3,7 @@ import { clearIntervalAsync, setIntervalAsync } from 'set-interval-async/dynamic
 import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
 import { type GetDataConditions, History, type TimeCondition } from './utils/History';
 import { PCF8583 } from './utils/PCF8583';
-import { runSave, sumPulsesFromHistory, WindSpeed } from './utils/utilities';
+import { getMaxIncreaseRate, getTotalPulses, runSave, type WindSpeed } from './utils/utilities';
 
 /**
  * Represents an Anemometer device for measuring wind speed using a PCF8583 real-time clock module.
@@ -115,9 +115,48 @@ export class Anemometer {
 			throw new Error(`The given time is not in range. Value is only valid between 1 and ${this.history.expirationTime}!`);
 		}
 
-		const { pulses, duration } = sumPulsesFromHistory(this.history, time);
+		const data = this.history.get({ recentSeconds: time });
+		const { pulses, timeSpan } = getTotalPulses(data);
 
-		return this.calc(pulses, duration);
+		return this.calc(pulses, timeSpan);
+	}
+
+	/**
+	 * Retrieves data records based on the specified conditions.
+	 *
+	 * @param conditions The conditions to filter and retrieve the data records.
+	 * @returns An copied array of data records. Each record includes a value and a timestamp.
+	 */
+	getHistoryData(conditions: GetDataConditions) {
+		return this.history.get(conditions);
+	}
+
+	/**
+	 * Calculates the average wind speed over a specified time period.
+	 * The average wind speed is computed from the total pulses and the time span of the data records.
+	 *
+	 * @param conditions Optional time conditions to filter the data.
+	 * @returns The average wind speed calculated from the data records.
+	 */
+	getAverageWindSpeed(conditions: TimeCondition = {}) {
+		const data = this.history.get(conditions);
+		const { pulses, timeSpan } = getTotalPulses(data);
+
+		return this.calc(pulses, timeSpan);
+	}
+
+	/**
+	 * Finds the peak wind gust within a specified time period.
+	 * The peak wind gust is determined by finding the largest increase in pulse values and the corresponding time span.
+	 *
+	 * @param conditions Optional time conditions to filter the data.
+	 * @returns The peak wind gust calculated from the data records.
+	 */
+	getPeakWindGust(conditions: TimeCondition = {}) {
+		const data = this.history.get(conditions);
+		const { step, timeSpan } = getMaxIncreaseRate(data);
+
+		return this.calc(step, timeSpan);
 	}
 
 	/**

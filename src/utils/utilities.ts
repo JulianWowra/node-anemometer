@@ -192,28 +192,69 @@ export async function runSave<T extends Promise<unknown>, U = undefined>(
 }
 
 /**
- * Calculates the sum of pulses from a history object within a specified offset.
+ * Evaluates the total pulses and the duration based on the data records.
+ * This function calculates the total number of pulses (revolutions) considering possible sensor resets
+ * and the time span between the first and last record.
  *
- * @param {History<number>} history The history object containing pulse data.
- * @param {number} time The offset for which to calculate the sum of pulses.
- * @returns {object} An object containing the sum of pulses and duration within the specified time offset.
+ * @param data An array of data records containing the value and timestamp of each record.
+ * @returns An object with the total pulses and the duration in seconds.
  */
-export function sumPulsesFromHistory(history: History<number>, time: number) {
-	const data = history.get(time);
-
+export function getTotalPulses(data: DataRecord<number>[]) {
 	if (data.length === 0) {
-		return { pulses: 0, duration: 0 };
+		return { pulses: 0, timeSpan: 0 };
 	}
 
-	const duration = data[data.length - 1].timestamp - data[0].timestamp;
-	const startValue = data[0].value;
-	let count = 0;
+	let pulses = 0;
+	let previousValue = data[0].value;
 
-	for (let i = 0; i < data.length; i++) {
-		if ((data[i + 1]?.value || 0) < data[i].value) {
-			count += data[i].value;
+	for (const record of data) {
+		if (record.value >= previousValue) {
+			pulses += record.value - previousValue;
+		} else {
+			pulses += record.value;
+		}
+
+		previousValue = record.value;
+	}
+
+	const timeSpan = data[data.length - 1].timestamp - data[0].timestamp;
+	return { pulses, timeSpan };
+}
+
+/**
+ * Calculates the maximum rate of increase between consecutive data records.
+ * This function identifies the maximum rate of increase (pulses per second) between any two consecutive records,
+ * along with the step (number of pulses) and time span (in seconds) for that maximum rate.
+ *
+ * @param data An array of data records containing the value and timestamp of each record.
+ * @returns An object with the maximum rate of increase, the corresponding step, and time span.
+ */
+export function getMaxIncreaseRate(data: DataRecord<number>[]) {
+	if (data.length < 2) {
+		return { rate: 0, step: 0, timeSpan: 0 };
+	}
+
+	let maxRate = 0;
+	let maxStep = 0;
+	let maxTimeSpan = 0;
+
+	for (let i = 0; i < data.length - 1; i++) {
+		const startRecord = data[i];
+		const endRecord = data[i + 1];
+
+		const step = endRecord.value - startRecord.value;
+		const timeSpan = endRecord.timestamp - startRecord.timestamp;
+
+		if (timeSpan > 0) {
+			const rate = step / timeSpan;
+
+			if (rate > maxRate) {
+				maxRate = rate;
+				maxStep = step;
+				maxTimeSpan = timeSpan;
+			}
 		}
 	}
 
-	return { pulses: count - startValue, duration };
+	return { rate: maxRate, step: maxStep, timeSpan: maxTimeSpan };
 }
