@@ -4,15 +4,15 @@
 
 ## Install
 
-```
+```text
 npm install node-anemometer
 ```
 
-```
+```text
 pnpm install node-anemometer
 ```
 
-```
+```text
 yarn add node-anemometer
 ```
 
@@ -37,7 +37,7 @@ Example in TypeScript (with ES Modules):
 _Examples in the calculation not adjusted to your anemometer_
 
 ```typescript
-import { Anemometer, calcFactor, WindSpeed, WindSpeedUnits } from '../../dist';
+import { Anemometer, calcFactor, WindSpeed, WindSpeedUnits } from 'node-anemometer';
 
 const calc = (pulses: number, time: number): WindSpeed => {
   // You cannot divide by 0
@@ -61,16 +61,19 @@ async function start() {
   // Establish an i2c connection to the PCF8583 and start the reading process
   await myAnemometer.open();
 
-  // Wait 15 seconds to have a usable average value
-  setTimeout(() => {
-    // '.getData()' calculates the average wind speed of the past x seconds
-    const data = myAnemometer.getData(10);
+  // Wait 60 seconds to have a usable average value
+  setTimeout(async () => {
+    // '.getAverageWindSpeed()' calculates the average wind speed of the past x seconds
+    const average = myAnemometer.getAverageWindSpeed({ recentSeconds: 60 });
+    console.log(`Average wind speed: ${average.rounded(2)} ${average.unit}`);
 
-    console.log(`Wind speed: ${data.rounded(2)} ${data.unit}`);
+    // '.getPeakWindGust()' calculates the peak wind guest of the past x seconds
+    const peak = myAnemometer.getPeakWindGust({ recentSeconds: 60 });
+    console.log(`Peak wind speed: ${peak.rounded(2)} ${peak.unit}`);
 
     // Herewith you can stop the reading process and close the i2c connection
-    myAnemometer.close();
-  }, 15000);
+    await myAnemometer.close();
+  }, 60000);
 }
 
 start();
