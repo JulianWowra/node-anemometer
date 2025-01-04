@@ -131,10 +131,10 @@ _🇩🇪 - Content that is only available in German_
 
 ## Author
 
-👤 **KillerJulian <info@killerjulian.de>**
+👤 **Julian Wowra <development@julianwowra.de>**
 
-- Github: [@KillerJulian](https://github.com/KillerJulian)
+- Github: [@JulianWowra](https://github.com/JulianWowra)
 
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!<br />Feel free to check the [issues page](https://github.com/KillerJulian/node-anemometer/issues). You can also take a look at the [contributing guide](https://github.com/KillerJulian/node-anemometer/blob/master/CONTRIBUTING.md).
+Contributions, issues and feature requests are welcome!<br />Feel free to check the [issues page](https://github.com/JulianWowra/node-anemometer/issues). You can also take a look at the [contributing guide](https://github.com/JulianWowra/node-anemometer/blob/main/CONTRIBUTING.md).

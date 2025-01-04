@@ -4,9 +4,9 @@
 	"version": "3.2.0",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"repository": "https://github.com/KillerJulian/node-anemometer",
-	"homepage": "https://killerjulian.github.io/node-anemometer",
-	"author": "KillerJulian <info@killerjulian.de>",
+	"repository": "https://github.com/JulianWowra/node-anemometer",
+	"homepage": "https://julianwowra.github.io/node-anemometer",
+	"author": "Julian Wowra <development@julianwowra.de>",
 	"license": "MIT",
 	"packageManager": "pnpm@9.7.0",
 	"dependencies": {
