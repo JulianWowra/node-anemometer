@@ -9,6 +9,9 @@
 	"author": "Julian Wowra <development@julianwowra.de>",
 	"license": "MIT",
 	"packageManager": "pnpm@9.7.0",
+	"publishConfig": {
+		"provenance": true
+	},
 	"dependencies": {
 		"i2c-bus": "^5.2.3",
 		"set-interval-async": "^3.0.3",
