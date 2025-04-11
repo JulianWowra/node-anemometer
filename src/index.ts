@@ -3,7 +3,7 @@ import { clearIntervalAsync, setIntervalAsync } from 'set-interval-async/dynamic
 import { I2CADDR, PCF8583Mode } from './utils/constants';
 import { type GetDataConditions, History, type TimeCondition } from './utils/History';
 import { PCF8583 } from './utils/PCF8583';
-import { getMaxIncreaseRate, getTotalPulses, runSave, type WindSpeed } from './utils/utilities';
+import { getMaxIncreaseRate, getTotalPulses, runSave, sleep, type WindSpeed } from './utils/utilities';
 
 /**
  * Represents an Anemometer device for measuring wind speed using a PCF8583 real-time clock module.
@@ -51,11 +51,28 @@ export class Anemometer {
 	 * @returns A promise that resolves when the chip is successfully reset and initialized.
 	 */
 	private async resetChip() {
+		if (this.chip.isOpen) {
+			await this.chip.close();
+		}
+
+		await this.chip.open();
 		await this.chip.reset();
 		await this.chip.setMode(PCF8583Mode.COUNTER);
+		await this.chip.start();
 
-		await this.chip.setCount(0);
 		this.history.push(0);
+	}
+
+	/**
+	 * Clears the read interval if it is set.
+	 *
+	 * @returns A promise that resolves when the read interval is cleared.
+	 */
+	private async clearReadInterval() {
+		if (this.readInterval !== null) {
+			await clearIntervalAsync(this.readInterval);
+			this.readInterval = null;
+		}
 	}
 
 	/*
@@ -70,13 +87,8 @@ export class Anemometer {
 	 * @returns A promise that resolves when the connection is successfully opened.
 	 */
 	async open() {
-		if (this.readInterval !== null) {
-			await clearIntervalAsync(this.readInterval);
-			this.readInterval = null;
-		}
-
-		await this.chip.open();
 		await this.resetChip();
+		await this.clearReadInterval();
 
 		this.readInterval = setIntervalAsync(async () => {
 			let count: number | null = null;
@@ -87,6 +99,8 @@ export class Anemometer {
 				if (count !== null) {
 					break;
 				}
+
+				await sleep(100 * i);
 			}
 
 			if (count === null) {
@@ -101,6 +115,20 @@ export class Anemometer {
 				this.history.push(0);
 			}
 		}, this.opts.readInterval ?? 1000);
+	}
+
+	/**
+	 * Closes the i2c connection and stops the reading process.
+	 *
+	 * @returns A promise that resolves when the connection is successfully closed.
+	 */
+	async close() {
+		await this.clearReadInterval();
+
+		if (this.chip.isOpen) {
+			await this.chip.stop();
+			await this.chip.close();
+		}
 	}
 
 	/**
@@ -157,20 +185,6 @@ export class Anemometer {
 		const { step, timeSpan } = getMaxIncreaseRate(data);
 
 		return this.calc(step, timeSpan);
-	}
-
-	/**
-	 * Closes the i2c connection and stops reading prozess.
-	 *
-	 * @returns A promise that resolves when the Anemometer is successfully closed.
-	 */
-	async close() {
-		if (this.readInterval !== null) {
-			await clearIntervalAsync(this.readInterval);
-			this.readInterval = null;
-		}
-
-		await this.chip.close();
 	}
 }
 

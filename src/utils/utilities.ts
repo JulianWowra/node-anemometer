@@ -93,6 +93,13 @@ export class WindSpeed {
  * @param value The number to be rounded.
  * @param decimalPlaces The number of decimal places to round to.
  * @returns The rounded number.
+ * Sleeps for a specified number of milliseconds.
+ * @param ms The number of milliseconds to sleep.
+ * @returns A promise that resolves after the specified time.
+ */
+export async function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
  */
 export function round(value: number, decimalPlaces: number) {
 	if (value % 1 !== 0) {
