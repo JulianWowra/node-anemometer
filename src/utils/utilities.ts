@@ -153,7 +153,7 @@ export function byteToBCD(value: number) {
 		throw new Error(`Invalid value for bcd convertion:  ${value}`);
 	}
 
-	return ((value / 10) << 4) + (value % 10);
+	return (Math.floor(value / 10) << 4) | value % 10;
 }
 
 /**
