@@ -1,5 +1,5 @@
 import { type I2CBus, open as openConnection, type OpenOptions } from 'i2c-bus';
-import { LOCATION_CONTROL, LOCATION_COUNTER, MODE_TEST } from './constants';
+import { LOCATION_CONTROL, LOCATION_COUNTER, type PCF8583Mode } from './constants';
 import { bcdToByte, byteToBCD } from './utilities';
 
 export class PCF8583 {
@@ -136,14 +136,9 @@ export class PCF8583 {
 	}
 
 	/**
-	 * Sets the clock mode of the PCF8583 module.
 	 *
-	 * @param mode The mode to set.
-	 * @returns Resolves when the mode is successfully set.
 	 */
-	async setMode(mode: number) {
 		let control = await this.i2cReadRegister(LOCATION_CONTROL);
-		control = (control & ~MODE_TEST) | (mode & MODE_TEST);
 
 		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
@@ -174,6 +169,19 @@ export class PCF8583 {
 			0x00, // 10 set year offset to 0
 			0x00 // 11 set last read value for year to 0
 		]);
+	}
+
+	/**
+	 * Sets the clock mode of the PCF8583 module.
+	 *
+	 * @param mode The mode to set.
+	 * @returns Resolves when the mode is successfully set.
+	 */
+	async setMode(mode: PCF8583Mode) {
+		let control = await this.i2cReadRegister(LOCATION_CONTROL);
+		control = (control & ~0x30) | (mode & 0x30);
+
+		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
 
 	/**

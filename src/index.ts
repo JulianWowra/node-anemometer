@@ -1,6 +1,6 @@
 import type { SetIntervalAsyncTimer } from 'set-interval-async/dynamic';
 import { clearIntervalAsync, setIntervalAsync } from 'set-interval-async/dynamic';
-import { I2CADDR, MODE_EVENT_COUNTER } from './utils/constants';
+import { I2CADDR, PCF8583Mode } from './utils/constants';
 import { type GetDataConditions, History, type TimeCondition } from './utils/History';
 import { PCF8583 } from './utils/PCF8583';
 import { getMaxIncreaseRate, getTotalPulses, runSave, type WindSpeed } from './utils/utilities';
@@ -52,7 +52,7 @@ export class Anemometer {
 	 */
 	private async resetChip() {
 		await this.chip.reset();
-		await this.chip.setMode(MODE_EVENT_COUNTER);
+		await this.chip.setMode(PCF8583Mode.COUNTER);
 
 		await this.chip.setCount(0);
 		this.history.push(0);
