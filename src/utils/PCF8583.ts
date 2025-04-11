@@ -2,6 +2,10 @@ import { type I2CBus, open as openConnection, type OpenOptions } from 'i2c-bus';
 import { LOCATION_CONTROL, LOCATION_COUNTER, type PCF8583Mode } from './constants';
 import { bcdToByte, byteToBCD } from './utilities';
 
+/**
+ * Represents a PCF8583 real-time clock module.
+ * This class provides methods to interact with the PCF8583 module over I2C.
+ */
 export class PCF8583 {
 	protected wire: I2CBus | null = null;
 
@@ -17,6 +21,12 @@ export class PCF8583 {
 		readonly i2cOptions?: OpenOptions
 	) {}
 
+	/**
+	 * Indicates whether the I2C connection is currently open.
+	 *
+	 * @readonly
+	 * @returns `true` if the connection is open, otherwise `false`.
+	 */
 	get isOpen() {
 		return this.wire !== null;
 	}
@@ -27,6 +37,15 @@ export class PCF8583 {
 	 * ==========================================
 	 */
 
+	/**
+	 * Writes an array of bytes to the specified register.
+	 *
+	 * @param register The register address to write to.
+	 * @param bytes The array of bytes to write.
+	 * @returns A promise that resolves when the write operation is complete.
+	 * @throws If the I2C connection is not open.
+	 * @throws If the write operation fails.
+	 */
 	protected async i2cWriteBytes(register: number, bytes: number[]) {
 		const buff = Buffer.from(bytes);
 
@@ -45,6 +64,15 @@ export class PCF8583 {
 		});
 	}
 
+	/**
+	 * Reads an array of bytes from the specified register.
+	 *
+	 * @param register The register address to read from.
+	 * @param length The number of bytes to read.
+	 * @returns A promise that resolves with the read bytes as a Buffer.
+	 * @throws If the I2C connection is not open.
+	 * @throws If the read operation fails.
+	 */
 	protected async i2cReadBytes(register: number, length: number) {
 		const buff = Buffer.alloc(length);
 
@@ -63,10 +91,27 @@ export class PCF8583 {
 		});
 	}
 
+	/**
+	 * Reads a single byte from the specified register.
+	 *
+	 * @param offset The register address to read from.
+	 * @returns A promise that resolves with the read byte value.
+	 * @throws If the I2C connection is not open.
+	 * @throws If the read operation fails.
+	 */
 	protected async i2cReadRegister(offset: number) {
 		return (await this.i2cReadBytes(offset, 1))[0];
 	}
 
+	/**
+	 * Writes a single byte to the specified register.
+	 *
+	 * @param offset The register address to write to.
+	 * @param value The byte value to write.
+	 * @returns A promise that resolves when the write operation is complete.
+	 * @throws If the I2C connection is not open.
+	 * @throws If the write operation fails.
+	 */
 	protected async i2cWriteRegister(offset: number, value: number) {
 		await this.i2cWriteBytes(offset, [value]);
 	}
@@ -81,7 +126,7 @@ export class PCF8583 {
 	 * Opens the I2C connection to the PCF8583 module.
 	 *
 	 * @returns Resolves when the connection is successfully opened.
-	 * @throws If the i2c connection is allready opened.
+	 * @throws If the i2c connection is already opened.
 	 */
 	async open() {
 		if (this.wire) {
@@ -103,7 +148,7 @@ export class PCF8583 {
 	 * Closes the I2C connection to the PCF8583 module and stops the clock.
 	 *
 	 * @returns  Resolves when the connection is successfully closed.
-	 * @throws If the i2c connection is allready closed.
+	 * @throws If the i2c connection is already closed.
 	 */
 	async close() {
 		if (!this.wire) {
@@ -122,13 +167,25 @@ export class PCF8583 {
 	}
 
 	/**
+	 * Starts the clock on the PCF8583 module.
+	 *
+	 * @returns A promise that resolves when the clock is started.
+	 * @throws If the I2C connection is not open.
+	 * @throws If the start operation fails.
+	 */
 	async start() {
 		let control = await this.i2cReadRegister(LOCATION_CONTROL);
 		control &= 0x7f;
 
 		await this.i2cWriteRegister(LOCATION_CONTROL, control);
 	}
+
+	/**
+	 * Stops the clock on the PCF8583 module.
 	 *
+	 * @returns A promise that resolves when the clock is stopped.
+	 * @throws If the I2C connection is not open.
+	 * @throws If the stop operation fails.
 	 */
 	async stop() {
 		let control = await this.i2cReadRegister(LOCATION_CONTROL);
