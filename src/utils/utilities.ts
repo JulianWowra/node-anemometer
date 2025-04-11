@@ -88,11 +88,6 @@ export class WindSpeed {
 }
 
 /**
- * Rounds a number to a specified number of decimal places.
- *
- * @param value The number to be rounded.
- * @param decimalPlaces The number of decimal places to round to.
- * @returns The rounded number.
  * Sleeps for a specified number of milliseconds.
  * @param ms The number of milliseconds to sleep.
  * @returns A promise that resolves after the specified time.
@@ -100,14 +95,20 @@ export class WindSpeed {
 export async function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Rounds a number to a specified number of decimal places
+ * @param value The number to round
+ * @param decimalPlaces The number of decimal places
+ * @returns The rounded number
  */
-export function round(value: number, decimalPlaces: number) {
-	if (value % 1 !== 0) {
-		const i = Math.pow(10, decimalPlaces);
-		return Math.round((value + Number.EPSILON) * i) / i;
+export function round(value: number, decimalPlaces: number): number {
+	if (!isFinite(value) || decimalPlaces < 0) {
+		throw new Error('Invalid input for rounding!');
 	}
 
-	return value;
+	const factor = Math.pow(10, decimalPlaces);
+	return Math.round((value + Number.EPSILON) * factor) / factor;
 }
 
 /**
@@ -169,33 +170,35 @@ export function scanBus(...args: Parameters<typeof openSync>) {
 }
 
 /**
- * Runs a promise and handles any errors, optionally providing a fallback value.
+ * Safely executes a promise and handles any errors, returning an optional fallback value if the promise fails.
  *
- * @param promise The promise to run.
- * @param returnOnFail The value to return on failure.
- * @param onCatch A callback function to handle errors.
+ * @template TResult The type of the value that the promise resolves to
+ * @template TFallback The type of the fallback value returned on failure
  *
- * @returns A promise that resolves with the result of the promise or the fallback value.
+ * @param promise The promise to execute
+ * @param returnOnFail The value to return if the promise rejects
+ * @param onCatch Optional callback to handle errors
+ *
+ * @returns A promise that resolves with either the result of the original promise or the fallback value
  */
-export async function runSave<T extends Promise<unknown>, U = undefined>(
-	promise: T,
-	returnOnFail?: U,
+export async function runSave<TResult, TFallback = undefined>(
+	promise: Promise<TResult>,
+	returnOnFail?: TFallback,
 	onCatch?: (error: unknown) => void
-): Promise<Awaited<T> | U> {
+): Promise<TResult | TFallback> {
 	try {
 		return await promise;
-	} catch (e) {
+	} catch (error) {
 		if (onCatch) {
 			try {
-				onCatch(e);
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			} catch (e) {
-				// do nothing
+				onCatch(error);
+			} catch {
+				// Silently ignore errors in the error handler to prevent cascading failures
 			}
 		}
 	}
 
-	return returnOnFail as U;
+	return returnOnFail as TFallback;
 }
 
 /**

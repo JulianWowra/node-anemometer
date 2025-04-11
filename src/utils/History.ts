@@ -34,7 +34,7 @@ export class History<T> {
 	 * @param value The value to be added to the history.
 	 */
 	push(value: T) {
-		if (this.maxElements > 0 && this.data.length >= this.maxElements) {
+		if (this.maxElements > 0 && this.data.length + 1 >= this.maxElements) {
 			this.data.shift();
 		}
 
@@ -66,7 +66,7 @@ export class History<T> {
 
 		// Sort by order
 		if (conditions.order && conditions.order.toLowerCase() === 'asc') {
-			result.sort((a, b) => a.timestamp - b.timestamp);
+			result = result.sort((a, b) => a.timestamp - b.timestamp);
 		}
 
 		// Limit the number of results
