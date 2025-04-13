@@ -6,5 +6,9 @@ export const LOCATION_CONTROL = 0x00;
 export const LOCATION_COUNTER = 0x01;
 
 // Function modes
-export const MODE_EVENT_COUNTER = 0x20;
-export const MODE_TEST = 0x30;
+export enum PCF8583Mode {
+	// CLOCK = 0x00 << 4,
+	// ALARM = 0x01 << 4,
+	COUNTER = 0x02 << 4
+	// TEST = 0x03 << 4
+}

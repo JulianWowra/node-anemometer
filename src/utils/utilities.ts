@@ -1,6 +1,5 @@
 import { openSync } from 'i2c-bus';
-import { promisify } from 'util';
-import { History } from './History';
+import type { DataRecord } from './History';
 
 export enum WindSpeedUnits {
 	kilometersPerHour = 'km/h',
@@ -15,8 +14,8 @@ export class WindSpeed {
 	/**
 	 * Creates an instance of WindSpeed with a numeric value and unit type.
 	 *
-	 * @param {number} value The numeric value of the WindSpeed.
-	 * @param {WindSpeedUnits} unit The unit type (e.g., km/h, m/s, kn).
+	 * @param value The numeric value of the WindSpeed.
+	 * @param unit The unit type (e.g., km/h, m/s, kn).
 	 */
 	constructor(
 		readonly value: number,
@@ -26,8 +25,8 @@ export class WindSpeed {
 	/**
 	 * Rounds the WindSpeed value to a specified number of decimal places.
 	 *
-	 * @param {number} decimalPlaces The number of decimal places to round to.
-	 * @returns {number} The rounded WindSpeed value.
+	 * @param decimalPlaces The number of decimal places to round to.
+	 * @returns The rounded WindSpeed value.
 	 */
 	rounded(decimalPlaces = 1) {
 		return round(this.value, decimalPlaces);
@@ -36,16 +35,16 @@ export class WindSpeed {
 	/**
 	 * Converts the WindSpeed value to kilometers per hour (km/h).
 	 *
-	 * @returns {WindSpeed} A new WindSpeed instance with the value converted to km/h.
+	 * @returns A new WindSpeed instance with the value converted to km/h.
 	 */
 	toKilometersPerHour() {
 		switch (this.unit) {
-			case WindSpeedUnits.metersPerSecond: {
+			case WindSpeedUnits.metersPerSecond:
 				return new WindSpeed(this.value * 3.6, WindSpeedUnits.kilometersPerHour);
-			}
-			case WindSpeedUnits.knots: {
+
+			case WindSpeedUnits.knots:
 				return new WindSpeed(this.value * 1.852, WindSpeedUnits.kilometersPerHour);
-			}
+
 			default:
 				return this;
 		}
@@ -54,16 +53,16 @@ export class WindSpeed {
 	/**
 	 * Converts the WindSpeed value to meters per second (m/s).
 	 *
-	 * @returns {WindSpeed} A new WindSpeed instance with the value converted to m/s.
+	 * @returns A new WindSpeed instance with the value converted to m/s.
 	 */
 	toMetersPerSecond() {
 		switch (this.unit) {
-			case WindSpeedUnits.kilometersPerHour: {
+			case WindSpeedUnits.kilometersPerHour:
 				return new WindSpeed(this.value / 3.6, WindSpeedUnits.metersPerSecond);
-			}
-			case WindSpeedUnits.knots: {
+
+			case WindSpeedUnits.knots:
 				return new WindSpeed(this.value / 1.944, WindSpeedUnits.metersPerSecond);
-			}
+
 			default:
 				return this;
 		}
@@ -72,16 +71,16 @@ export class WindSpeed {
 	/**
 	 * Converts the WindSpeed value to knots (kn).
 	 *
-	 * @returns {WindSpeed} A new WindSpeed instance with the value converted to knots.
+	 * @returns A new WindSpeed instance with the value converted to knots.
 	 */
 	toKnots() {
 		switch (this.unit) {
-			case WindSpeedUnits.kilometersPerHour: {
+			case WindSpeedUnits.kilometersPerHour:
 				return new WindSpeed(this.value / 1.852, WindSpeedUnits.knots);
-			}
-			case WindSpeedUnits.metersPerSecond: {
+
+			case WindSpeedUnits.metersPerSecond:
 				return new WindSpeed(this.value * 1.944, WindSpeedUnits.knots);
-			}
+
 			default:
 				return this;
 		}
@@ -89,19 +88,27 @@ export class WindSpeed {
 }
 
 /**
- * Rounds a number to a specified number of decimal places.
- *
- * @param value The number to be rounded.
- * @param decimalPlaces The number of decimal places to round to.
- * @returns The rounded number.
+ * Sleeps for a specified number of milliseconds.
+ * @param ms The number of milliseconds to sleep.
+ * @returns A promise that resolves after the specified time.
  */
-export function round(value: number, decimalPlaces: number) {
-	if (value % 1 !== 0) {
-		const i = Math.pow(10, decimalPlaces);
-		return Math.round((value + Number.EPSILON) * i) / i;
+export async function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Rounds a number to a specified number of decimal places
+ * @param value The number to round
+ * @param decimalPlaces The number of decimal places
+ * @returns The rounded number
+ */
+export function round(value: number, decimalPlaces: number): number {
+	if (!isFinite(value) || decimalPlaces < 0) {
+		throw new Error('Invalid input for rounding!');
 	}
 
-	return value;
+	const factor = Math.pow(10, decimalPlaces);
+	return Math.round((value + Number.EPSILON) * factor) / factor;
 }
 
 /**
@@ -113,9 +120,9 @@ export function round(value: number, decimalPlaces: number) {
  * 3. Convert to kilometers per hour ( * 3600)
  * 4. Multiply adjustment
  *
- * @param {number} radius Radius between midpoint and edge of a cup in centimeters.
- * @param {number} adjustment Power loss due to mechanics (approximately 1.18).
- * @returns {number} The calculated factor.
+ * @param radius Radius between midpoint and edge of a cup in centimeters.
+ * @param adjustment Power loss due to mechanics (approximately 1.18).
+ * @returns The calculated factor.
  */
 export function calcFactor(radius: number, adjustment: number) {
 	return ((Math.PI * radius * 2) / 100000) * 3600 * adjustment;
@@ -124,8 +131,8 @@ export function calcFactor(radius: number, adjustment: number) {
 /**
  * Converts a Binary-Coded Decimal (BCD) value to a byte.
  *
- * @param {number} value The BCD value to convert.
- * @returns {number} The converted byte value.
+ * @param value The BCD value to convert.
+ * @returns The converted byte value.
  */
 export function bcdToByte(value: number) {
 	if (value >> 4 > 9 || (value & 0x0f) > 9) {
@@ -138,84 +145,126 @@ export function bcdToByte(value: number) {
 /**
  * Converts a byte value to Binary-Coded Decimal (BCD) format.
  *
- * @param {number} value The byte value to convert.
- * @returns {number} The converted BCD value.
- * @throws {Error} If the input value is invalid.
+ * @param value The byte value to convert.
+ * @returns The converted BCD value.
+ * @throws If the input value is invalid.
  */
 export function byteToBCD(value: number) {
 	if (value >= 100) {
 		throw new Error(`Invalid value for bcd convertion:  ${value}`);
 	}
 
-	return ((value / 10) << 4) + (value % 10);
+	return (Math.floor(value / 10) << 4) | value % 10;
 }
 
 /**
  * Returns an array of numbers, where each number represents the I2C address of a detected device.
  * @see https://github.com/fivdi/i2c-bus#busscanstartaddr-endaddr-cb
- *
- * @async
  */
-export async function scanBus(bus: number) {
-	const wire = openSync(bus);
-	const result = await promisify<number[]>(wire.scan)();
+export function scanBus(...args: Parameters<typeof openSync>) {
+	const wire = openSync(...args);
+	const result = wire.scanSync();
 
 	wire.closeSync();
 	return result;
 }
 
 /**
- * Runs a promise and handles any errors, optionally providing a fallback value.
+ * Safely executes a promise and handles any errors, returning an optional fallback value if the promise fails.
  *
- * @async
- * @param {Promise<unknown>} promise The promise to run.
- * @param {U} returnOnFail The value to return on failure.
- * @param {(error: unknown) => void} onCatch A callback function to handle errors.
- * @returns {Promise<Awaited<Promise<unknown>> | U>} A promise that resolves with the result of the promise or the fallback value.
+ * @template TResult The type of the value that the promise resolves to
+ * @template TFallback The type of the fallback value returned on failure
+ *
+ * @param promise The promise to execute
+ * @param returnOnFail The value to return if the promise rejects
+ * @param onCatch Optional callback to handle errors
+ *
+ * @returns A promise that resolves with either the result of the original promise or the fallback value
  */
-export async function runSave<T extends Promise<unknown>, U = undefined>(
-	promise: T,
-	returnOnFail?: U,
+export async function runSave<TResult, TFallback = undefined>(
+	promise: Promise<TResult>,
+	returnOnFail?: TFallback,
 	onCatch?: (error: unknown) => void
-): Promise<Awaited<T> | U> {
+): Promise<TResult | TFallback> {
 	try {
 		return await promise;
-	} catch (e) {
+	} catch (error) {
 		if (onCatch) {
 			try {
-				onCatch(e);
-			} catch (e) {
-				// do nothing
+				onCatch(error);
+			} catch {
+				// Silently ignore errors in the error handler to prevent cascading failures
 			}
 		}
 	}
 
-	return returnOnFail as U;
+	return returnOnFail as TFallback;
 }
 
 /**
- * Calculates the sum of pulses from a history object within a specified offset.
+ * Evaluates the total pulses and the duration based on the data records.
+ * This function calculates the total number of pulses (revolutions) considering possible sensor resets
+ * and the time span between the first and last record.
  *
- * @param {History<number>} history The history object containing pulse data.
- * @param {number} time The offset for which to calculate the sum of pulses.
- * @returns {object} An object containing the sum of pulses and duration within the specified time offset.
+ * @param data An array of data records containing the value and timestamp of each record.
+ * @returns An object with the total pulses and the duration in seconds.
  */
-export function sumPulsesFromHistory(history: History<number>, time: number) {
-	const data = history.get(time);
-
+export function getTotalPulses(data: DataRecord<number>[]) {
 	if (data.length === 0) {
-		return { pulses: 0, duration: 0 };
+		return { pulses: 0, timeSpan: 0 };
 	}
 
-	const duration = data[data.length - 1].timestamp - data[0].timestamp;
-	const startValue = data[0].value;
-	let count = 0;
+	let pulses = 0;
+	let previousValue = data[0].value;
 
-	for (let i = 0; i < data.length; i++) {
-		if ((data[i + 1]?.value || 0) < data[i].value) {
-			count += data[i].value;
+	for (const record of data) {
+		if (record.value >= previousValue) {
+			pulses += record.value - previousValue;
+		} else {
+			pulses += record.value;
+		}
+
+		previousValue = record.value;
+	}
+
+	const timeSpan = data[data.length - 1].timestamp - data[0].timestamp;
+	return { pulses, timeSpan };
+}
+
+/**
+ * Calculates the maximum rate of increase between consecutive data records.
+ * This function identifies the maximum rate of increase (pulses per second) between any two consecutive records,
+ * along with the step (number of pulses) and time span (in seconds) for that maximum rate.
+ *
+ * @param data An array of data records containing the value and timestamp of each record.
+ * @returns An object with the maximum rate of increase, the corresponding step, and time span.
+ */
+export function getMaxIncreaseRate(data: DataRecord<number>[]) {
+	if (data.length < 2) {
+		return { rate: 0, step: 0, timeSpan: 0 };
+	}
+
+	let maxRate = 0;
+	let maxStep = 0;
+	let maxTimeSpan = 0;
+
+	for (let i = 0; i < data.length - 1; i++) {
+		const startRecord = data[i];
+		const endRecord = data[i + 1];
+
+		const step = endRecord.value - startRecord.value;
+		const timeSpan = endRecord.timestamp - startRecord.timestamp;
+
+		if (timeSpan > 0) {
+			const rate = step / timeSpan;
+
+			if (rate > maxRate) {
+				maxRate = rate;
+				maxStep = step;
+				maxTimeSpan = timeSpan;
+			}
 		}
 	}
 
-	return { pulses: count - startValue, duration };
+	return { rate: maxRate, step: maxStep, timeSpan: maxTimeSpan };
 }
