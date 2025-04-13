@@ -79,7 +79,7 @@ async function start() {
 start();
 ```
 
-You can find more information in the full [documentation 📖](https://killerjulian.github.io/node-anemometer/).
+You can find more information in the full [documentation 📖](https://julianwowra.github.io/node-anemometer/).
 
 ### Calculation
 
